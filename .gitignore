@@ -36,3 +36,7 @@ exports/base44/runs/
 exports/base44/manual-drop/
 !exports/base44/.gitkeep
 !exports/base44/README.md
+
+# Supabase local runtime metadata
+supabase/.branches/
+supabase/.temp/
