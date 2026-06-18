@@ -1,6 +1,7 @@
+// @ts-nocheck
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { attachmentService } from '@/services/attachmentService';
 import { AttachmentSlot, CompactAttachSlot } from './FileAttachments';
 import { parsePayments } from '@/components/purchases/PaymentHistoryPanel';
 import { FileText, Receipt, Warehouse } from 'lucide-react';
@@ -23,30 +24,28 @@ export default function PurchaseAttachmentsPanel({ purchase }) {
   const qc = useQueryClient();
   const { data: attachments = [] } = useQuery({
     queryKey: ['attachments', 'purchase_record', purchase.id],
-    queryFn: () => base44.entities.Attachment.filter({ entity_type: 'purchase_record', entity_id: purchase.id }),
+    queryFn: () => attachmentService.listForEntity('purchase_record', purchase.id),
     enabled: !!purchase.id,
   });
 
   const createMut = useMutation({
-    mutationFn: data => base44.entities.Attachment.create(data),
+    mutationFn: ({ file, metadata }) => attachmentService.uploadForEntity('purchase_record', purchase.id, file, metadata),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['attachments', 'purchase_record', purchase.id] }),
   });
   const deleteMut = useMutation({
-    mutationFn: id => base44.entities.Attachment.delete(id),
+    mutationFn: id => attachmentService.archiveAttachment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['attachments', 'purchase_record', purchase.id] }),
   });
 
   const handleAdd = (section, sectionRef) => (att) => {
     createMut.mutate({
-      entity_type: 'purchase_record',
-      entity_id: purchase.id,
-      section,
-      section_ref: sectionRef || '',
-      file_url: att.file_url,
-      file_name: att.file_name,
-      file_size: att.file_size,
-      uploaded_at: att.uploaded_at,
-      uploaded_by: att.uploaded_by,
+      file: att.file,
+      metadata: {
+        ...att,
+        section,
+        section_ref: sectionRef || '',
+        description: `Demo purchase document for ${purchase.coffee_code || purchase.id}`,
+      },
     });
   };
 
@@ -58,6 +57,9 @@ export default function PurchaseAttachmentsPanel({ purchase }) {
 
   return (
     <div className="space-y-6 py-2">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        Demo documents only. Do not upload real customer files in this migration phase.
+      </div>
       {/* ── Section 1: Purchase Contract ─────────────────────────── */}
       <div className="rounded-xl border border-border bg-card p-4">
         <SectionHeader

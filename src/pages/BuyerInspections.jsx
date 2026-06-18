@@ -16,13 +16,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, CheckCircle2, XCircle, Clock, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import RoleGuard from '@/components/RoleGuard';
 import AuditRecordBanner from '@/components/shared/AuditRecordBanner';
 import { computeStockPools } from '@/lib/stockPools';
 import TablePagination from '@/components/shared/TablePagination';
 import ActiveFilters from '@/components/shared/ActiveFilters';
+import DemoDocumentsPanel from '@/components/attachments/DemoDocumentsPanel';
 
 // PAGE_SIZE replaced by dynamic pageSize state
 const REJECTION_REASONS = ['Too Much Moisture', 'Grade Too Low', 'Defects', 'Smell/Taste Issue', 'Other'];
@@ -253,6 +254,7 @@ export default function BuyerInspections() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [documentTarget, setDocumentTarget] = useState(null);
   const [confirmMsg, setConfirmMsg] = useState(null);
   const [auditIssueTitle, setAuditIssueTitle] = useState('');
   const [auditRecordId, setAuditRecordId] = useState('');
@@ -421,6 +423,7 @@ export default function BuyerInspections() {
                     <TableCell>
                       <div className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => { setEditRecord(r); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => setDocumentTarget(r)}><FileText className="w-3.5 h-3.5" /></Button>
                         <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(r)}><Trash2 className="w-3.5 h-3.5" /></Button>
                       </div>
                     </TableCell>
@@ -450,6 +453,23 @@ export default function BuyerInspections() {
           onSubmit={data => { if (editRecord) updateMutation.mutate({ id: editRecord.id, data }); else createMutation.mutate(data); }}
           isSubmitting={createMutation.isPending || updateMutation.isPending}
         />
+        <Dialog open={!!documentTarget} onOpenChange={v => !v && setDocumentTarget(null)}>
+          <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display">Buyer Inspection Documents</DialogTitle>
+            </DialogHeader>
+            {documentTarget && (
+              <DemoDocumentsPanel
+                entityType="buyer_inspection"
+                entityId={documentTarget.id}
+                section="inspection_document"
+                sectionRef="buyer_sample"
+                title="Inspection Documents"
+                description={`Demo documents for ${documentTarget.buyer_name || 'buyer inspection'}`}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         <AlertDialog open={!!confirmMsg} onOpenChange={v => !v && setConfirmMsg(null)}>
           <AlertDialogContent>

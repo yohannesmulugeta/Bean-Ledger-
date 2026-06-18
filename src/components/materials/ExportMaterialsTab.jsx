@@ -10,12 +10,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, FileDown, FileSpreadsheet, Package, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileDown, FileSpreadsheet, Package, ArrowDownCircle, ArrowUpCircle, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import NumberInput from '@/components/shared/NumberInput';
 import { exportMaterialsPDF, exportMaterialsExcel, fmt } from '@/lib/materialsExport';
 import TablePagination from '@/components/shared/TablePagination';
 import { materialService } from '@/services/materialService';
+import DemoDocumentsPanel from '@/components/attachments/DemoDocumentsPanel';
 
 const ITEM_TYPES = ['Bag', 'Craft', 'Plaster', 'Green Pro', 'Bulk Bag Load'];
 const BAG_SIZES = ['30kg', '50kg', '60kg'];
@@ -183,6 +184,7 @@ export default function ExportMaterialsTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [documentTarget, setDocumentTarget] = useState(null);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(1);
@@ -433,6 +435,9 @@ export default function ExportMaterialsTab() {
                         <Button size="sm" variant="ghost" onClick={() => { setEditRecord(r); setDialogOpen(true); }}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setDocumentTarget(r)}>
+                          <FileText className="w-3.5 h-3.5" />
+                        </Button>
                         <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(r)}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -463,6 +468,24 @@ export default function ExportMaterialsTab() {
         onSubmit={data => { if (editRecord) updateMutation.mutate({ id: editRecord.id, data }); else createMutation.mutate(data); }}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
       />
+
+      <Dialog open={!!documentTarget} onOpenChange={v => !v && setDocumentTarget(null)}>
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Material Documents</DialogTitle>
+          </DialogHeader>
+          {documentTarget && (
+            <DemoDocumentsPanel
+              entityType="material_register_entry"
+              entityId={documentTarget.id}
+              section="material_invoice"
+              sectionRef="invoice"
+              title="Material Invoices"
+              description={`Demo documents for ${itemKey(documentTarget) || documentTarget.item_name || 'material entry'}`}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={v => !v && setDeleteTarget(null)}>
         <AlertDialogContent>

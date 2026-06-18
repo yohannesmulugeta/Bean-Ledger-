@@ -1,6 +1,7 @@
+// @ts-nocheck
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { attachmentService } from '@/services/attachmentService';
 import { AttachmentSlot } from './FileAttachments';
 import { Warehouse, FileText, Scale } from 'lucide-react';
 
@@ -22,30 +23,28 @@ export default function WarehouseAttachmentsPanel({ receipt }) {
   const qc = useQueryClient();
   const { data: attachments = [] } = useQuery({
     queryKey: ['attachments', 'warehouse_receipt', receipt.id],
-    queryFn: () => base44.entities.Attachment.filter({ entity_type: 'warehouse_receipt', entity_id: receipt.id }),
+    queryFn: () => attachmentService.listForEntity('warehouse_receipt', receipt.id),
     enabled: !!receipt.id,
   });
 
   const createMut = useMutation({
-    mutationFn: data => base44.entities.Attachment.create(data),
+    mutationFn: ({ file, metadata }) => attachmentService.uploadForEntity('warehouse_receipt', receipt.id, file, metadata),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['attachments', 'warehouse_receipt', receipt.id] }),
   });
   const deleteMut = useMutation({
-    mutationFn: id => base44.entities.Attachment.delete(id),
+    mutationFn: id => attachmentService.archiveAttachment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['attachments', 'warehouse_receipt', receipt.id] }),
   });
 
   const handleAdd = (section) => (att) => {
     createMut.mutate({
-      entity_type: 'warehouse_receipt',
-      entity_id: receipt.id,
-      section,
-      section_ref: section,
-      file_url: att.file_url,
-      file_name: att.file_name,
-      file_size: att.file_size,
-      uploaded_at: att.uploaded_at,
-      uploaded_by: att.uploaded_by,
+      file: att.file,
+      metadata: {
+        ...att,
+        section,
+        section_ref: section,
+        description: `Demo warehouse document for ${receipt.receipt_number || receipt.grn_code || receipt.id}`,
+      },
     });
   };
 
@@ -53,6 +52,9 @@ export default function WarehouseAttachmentsPanel({ receipt }) {
 
   return (
     <div className="space-y-4 py-2">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        Demo documents only. Do not upload real customer files in this migration phase.
+      </div>
       {/* ── Section 1: GRN Certificate ───────────────────────────── */}
       <div className="rounded-xl border border-border bg-card p-4">
         <SectionHeader

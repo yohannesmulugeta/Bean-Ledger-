@@ -1,13 +1,14 @@
+// @ts-nocheck
 import React, { useRef, useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Upload, Paperclip, Trash2, Eye, CheckCircle2, Loader2, AlertCircle, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRole } from '@/lib/role-hooks';
+import { attachmentService } from '@/services/attachmentService';
 
 const MAX_SIZE_MB = 10;
-const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/heic'];
-const ACCEPTED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png', '.heic'];
+const ACCEPTED_TYPES = ['application/pdf', 'text/plain', 'image/jpeg', 'image/jpg', 'image/png', 'image/heic'];
+const ACCEPTED_EXTS = ['.pdf', '.txt', '.jpg', '.jpeg', '.png', '.heic'];
 
 function isAcceptedFile(file) {
   if (ACCEPTED_TYPES.includes(file.type)) return true;
@@ -20,6 +21,11 @@ function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+async function openAttachment(att) {
+  const url = await attachmentService.getSignedUrl(att.id);
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 /**
@@ -66,28 +72,33 @@ export function AttachmentSlot({
     setUploading(true);
     setProgress(10);
 
-    // Simulate progress while uploading
     const progressInterval = setInterval(() => {
       setProgress(p => Math.min(p + 15, 85));
     }, 300);
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    clearInterval(progressInterval);
-    setProgress(100);
-
-    const user = await base44.auth.me();
-    onAdd({
-      file_url,
-      file_name: file.name,
-      file_size: file.size,
-      uploaded_at: new Date().toISOString(),
-      uploaded_by: user?.full_name || user?.email || 'Unknown',
-    });
-
-    setJustDone(true);
-    setTimeout(() => { setJustDone(false); setProgress(0); }, 2000);
-    setUploading(false);
-    e.target.value = '';
+    try {
+      await onAdd({
+        file,
+        file_name: file.name,
+        original_filename: file.name,
+        file_size: file.size,
+        file_size_bytes: file.size,
+        mime_type: file.type,
+        uploaded_at: new Date().toISOString(),
+        uploaded_by: 'Demo Admin',
+      });
+      clearInterval(progressInterval);
+      setProgress(100);
+      setJustDone(true);
+      setTimeout(() => { setJustDone(false); setProgress(0); }, 2000);
+      e.target.value = '';
+    } catch (err) {
+      clearInterval(progressInterval);
+      setError(err?.message || 'Upload failed. This demo only accepts safe local test files.');
+      setProgress(0);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const showEmpty = attachments.length === 0 && !uploading;
@@ -174,11 +185,9 @@ export function AttachmentSlot({
               {att.file_size ? ` · ${formatBytes(att.file_size)}` : ''}
             </p>
           </div>
-          <a href={att.file_url} target="_blank" rel="noopener noreferrer">
-            <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary hover:text-primary">
-              <Eye className="w-3.5 h-3.5" />
-            </Button>
-          </a>
+          <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary hover:text-primary" onClick={() => openAttachment(att)}>
+            <Eye className="w-3.5 h-3.5" />
+          </Button>
           {canDelete && (
             <Button
               type="button"
@@ -223,17 +232,23 @@ export function CompactAttachSlot({ attachments = [], onAdd, onDelete, cpvRef })
       return;
     }
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const user = await base44.auth.me();
-    onAdd({
-      file_url,
-      file_name: file.name,
-      file_size: file.size,
-      uploaded_at: new Date().toISOString(),
-      uploaded_by: user?.full_name || user?.email || 'Unknown',
-    });
-    setUploading(false);
-    e.target.value = '';
+    try {
+      await onAdd({
+        file,
+        file_name: file.name,
+        original_filename: file.name,
+        file_size: file.size,
+        file_size_bytes: file.size,
+        mime_type: file.type,
+        uploaded_at: new Date().toISOString(),
+        uploaded_by: 'Demo Admin',
+      });
+      e.target.value = '';
+    } catch (err) {
+      setError(err?.message || 'Upload failed. This demo only accepts safe local test files.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -255,11 +270,9 @@ export function CompactAttachSlot({ attachments = [], onAdd, onDelete, cpvRef })
           <div key={att.id} className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded px-2 py-1">
             <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
             <span className="text-[10px] font-medium text-foreground truncate max-w-[140px]">{att.file_name}</span>
-            <a href={att.file_url} target="_blank" rel="noopener noreferrer">
-              <Button type="button" size="sm" variant="ghost" className="h-5 w-5 p-0 text-primary">
-                <Eye className="w-3 h-3" />
-              </Button>
-            </a>
+            <Button type="button" size="sm" variant="ghost" className="h-5 w-5 p-0 text-primary" onClick={() => openAttachment(att)}>
+              <Eye className="w-3 h-3" />
+            </Button>
             {canDelete && (
               <Button type="button" size="sm" variant="ghost" className="h-5 w-5 p-0 text-destructive" onClick={() => onDelete(att)}>
                 <Trash2 className="w-3 h-3" />

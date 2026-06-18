@@ -1,6 +1,7 @@
+// @ts-nocheck
 import React, { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { attachmentService } from '@/services/attachmentService';
 import { Button } from '@/components/ui/button';
 import { Upload, Eye, Trash2, CheckCircle2, Loader2, FileX } from 'lucide-react';
 import { format } from 'date-fns';
@@ -50,11 +51,9 @@ function DocRow({ doc, attachment, onUpload, onDelete, uploading, error }) {
         {attachment ? (
           <>
             <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">Uploaded</span>
-            <a href={attachment.file_url} target="_blank" rel="noopener noreferrer">
-              <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
-                <Eye className="w-3.5 h-3.5" /> View
-              </Button>
-            </a>
+            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => attachmentService.getSignedUrl(attachment.id).then((url) => window.open(url, '_blank', 'noopener,noreferrer'))}>
+              <Eye className="w-3.5 h-3.5" /> View
+            </Button>
             {canDelete && (
               <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => onDelete(attachment)}>
                 <Trash2 className="w-3.5 h-3.5" />
@@ -83,16 +82,16 @@ export default function ExportDocsPanel({ contract }) {
 
   const { data: attachments = [] } = useQuery({
     queryKey: ['attachments', 'export_contract', contract.id],
-    queryFn: () => base44.entities.Attachment.filter({ entity_type: 'export_contract', entity_id: contract.id }),
+    queryFn: () => attachmentService.listForEntity('export_contract', contract.id),
     enabled: !!contract.id,
   });
 
   const createMut = useMutation({
-    mutationFn: data => base44.entities.Attachment.create(data),
+    mutationFn: ({ file, metadata }) => attachmentService.uploadForEntity('export_contract', contract.id, file, metadata),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['attachments', 'export_contract', contract.id] }),
   });
   const deleteMut = useMutation({
-    mutationFn: id => base44.entities.Attachment.delete(id),
+    mutationFn: id => attachmentService.archiveAttachment(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['attachments', 'export_contract', contract.id] }),
   });
 
@@ -112,19 +111,26 @@ export default function ExportDocsPanel({ contract }) {
       return;
     }
     setUploadingKey(docKey);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const user = await base44.auth.me();
-    await createMut.mutateAsync({
-      entity_type: 'export_contract',
-      entity_id: contract.id,
-      section: 'export_doc',
-      section_ref: docKey,
-      file_url,
-      file_name: file.name,
-      uploaded_by: user?.full_name || user?.email || 'Unknown',
-    });
-    setUploadingKey(null);
-    e.target.value = '';
+    try {
+      await createMut.mutateAsync({
+        file,
+        metadata: {
+          section: 'export_doc',
+          section_ref: docKey,
+          original_filename: file.name,
+          file_name: file.name,
+          file_size_bytes: file.size,
+          mime_type: file.type,
+          uploaded_by: 'Demo Admin',
+          description: `Demo export document for ${contract.contract_no || contract.id}`,
+        },
+      });
+      e.target.value = '';
+    } catch (err) {
+      setErrors(prev => ({ ...prev, [docKey]: err?.message || 'Upload failed. This demo only accepts safe local test files.' }));
+    } finally {
+      setUploadingKey(null);
+    }
   };
 
   const handleDelete = (att) => deleteMut.mutate(att.id);
@@ -133,6 +139,9 @@ export default function ExportDocsPanel({ contract }) {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        Demo documents only. Do not upload real customer files in this migration phase.
+      </div>
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-foreground">Export Documents Checklist</h4>
         <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${uploadedCount === EXPORT_DOCS.length ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>

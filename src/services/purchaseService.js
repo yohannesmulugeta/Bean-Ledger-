@@ -2,6 +2,7 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { calculatePurchaseTotals, ensureUniqueCoffeeCode, archiveRecord } from '@/lib/purchaseCalculations';
 import { DEMO_META } from './demoData';
 import { createDemoId, readDemoStore, writeDemoStore } from './demoStore';
+import { attachmentService } from './attachmentService';
 
 const nowIso = () => new Date().toISOString();
 
@@ -272,6 +273,6 @@ export const purchaseService = {
   },
 
   async listPurchaseAttachments() {
-    return [];
+    return attachmentService.listForEntity('purchase_record', null);
   },
 };

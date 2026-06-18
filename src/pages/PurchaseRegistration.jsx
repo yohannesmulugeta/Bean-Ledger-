@@ -27,6 +27,7 @@ import DuplicateWarningBanner from '@/components/purchases/DuplicateWarningBanne
 import DuplicateConfirmDialog from '@/components/purchases/DuplicateConfirmDialog';
 import { supplierService } from '@/services/supplierService';
 import { purchaseService } from '@/services/purchaseService';
+import PurchaseAttachmentsPanel from '@/components/attachments/PurchaseAttachmentsPanel';
 
 function fmt(n, decimals = 2) {
   if (n == null || isNaN(n)) return '—';
@@ -473,9 +474,7 @@ function PurchaseFormDialog({ open, onOpenChange, initialData, suppliers, allRec
             </TabsList>
             <TabsContent value="details">{formContent}</TabsContent>
             <TabsContent value="attachments">
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                Purchase attachments remain on the legacy Base44 path until the attachment migration phase.
-              </div>
+              <PurchaseAttachmentsPanel purchase={initialData} />
             </TabsContent>
           </Tabs>
         ) : formContent}

@@ -287,3 +287,21 @@ on conflict (id) do update set
   changes = excluded.changes,
   is_demo = true,
   created_at = excluded.created_at;
+
+insert into public.attachments (
+  id, organization_id, base44_id, entity_type, entity_id, section, section_ref,
+  original_filename, storage_bucket, storage_path, mime_type, file_size_bytes,
+  description, uploaded_by, is_demo, created_at, archived_at
+) values
+  ('c1000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', null, 'purchase_record', '44444444-4444-4444-8444-000000000001', 'payment_voucher', 'DEMO-CPV-001', 'demo-purchase-receipt-placeholder.txt', 'demo-receipts', '11111111-1111-4111-8111-111111111111/purchase_record/44444444-4444-4444-8444-000000000001/demo-purchase-receipt-placeholder.txt', 'text/plain', 128, 'Synthetic purchase receipt placeholder metadata only', 'Demo Admin', true, '2026-06-12T08:00:00Z', null),
+  ('c1000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', null, 'warehouse_receipt', '88888888-8888-4888-8888-000000000001', 'grn_certificate', 'grn_certificate', 'demo-warehouse-grn-placeholder.txt', 'demo-receipts', '11111111-1111-4111-8111-111111111111/warehouse_receipt/88888888-8888-4888-8888-000000000001/demo-warehouse-grn-placeholder.txt', 'text/plain', 128, 'Synthetic warehouse GRN placeholder metadata only', 'Demo Admin', true, '2026-06-12T08:10:00Z', null),
+  ('c1000000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', null, 'export_contract', 'eeeeeeee-eeee-4eee-8eee-000000000001', 'export_doc', 'commercial_invoice', 'demo-export-contract-placeholder.txt', 'demo-export-documents', '11111111-1111-4111-8111-111111111111/export_contract/eeeeeeee-eeee-4eee-8eee-000000000001/demo-export-contract-placeholder.txt', 'text/plain', 128, 'Synthetic export contract document placeholder metadata only', 'Demo Admin', true, '2026-06-12T08:20:00Z', null),
+  ('c1000000-0000-4000-8000-000000000004', '11111111-1111-4111-8111-111111111111', null, 'buyer_inspection', 'f1111111-1111-4111-8111-000000000001', 'inspection_document', 'buyer_sample', 'demo-buyer-inspection-placeholder.txt', 'demo-documents', '11111111-1111-4111-8111-111111111111/buyer_inspection/f1111111-1111-4111-8111-000000000001/demo-buyer-inspection-placeholder.txt', 'text/plain', 128, 'Synthetic buyer inspection placeholder metadata only', 'Demo Admin', true, '2026-06-12T08:30:00Z', null),
+  ('c1000000-0000-4000-8000-000000000005', '11111111-1111-4111-8111-111111111111', null, 'material_register_entry', 'b8500000-0000-4000-8000-000000000001', 'material_invoice', 'invoice', 'demo-material-invoice-placeholder.txt', 'demo-documents', '11111111-1111-4111-8111-111111111111/material_register_entry/b8500000-0000-4000-8000-000000000001/demo-material-invoice-placeholder.txt', 'text/plain', 128, 'Synthetic material invoice placeholder metadata only', 'Demo Admin', true, '2026-06-12T08:40:00Z', null),
+  ('c1000000-0000-4000-8000-000000000006', '11111111-1111-4111-8111-111111111111', null, 'purchase_record', '44444444-4444-4444-8444-000000000002', 'contract_document', 'signed_contract', 'demo-archived-document-placeholder.txt', 'demo-documents', '11111111-1111-4111-8111-111111111111/purchase_record/44444444-4444-4444-8444-000000000002/demo-archived-document-placeholder.txt', 'text/plain', 128, 'Synthetic archived document placeholder metadata only', 'Demo Admin', true, '2026-06-12T08:50:00Z', '2026-06-13T08:50:00Z')
+on conflict (id) do update set
+  original_filename = excluded.original_filename,
+  storage_bucket = excluded.storage_bucket,
+  storage_path = excluded.storage_path,
+  is_demo = true,
+  archived_at = excluded.archived_at;
