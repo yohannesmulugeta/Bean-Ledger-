@@ -167,3 +167,49 @@ values
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003', '88888888-8888-4888-8888-000000000003', '11111111-1111-4111-8111-111111111111', 'Created', '{"demo":true,"receipt_number":"DEMO-WH-003"}', 'Synthetic demo receipt seed', true, '2026-06-11T08:00:00Z'),
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', '88888888-8888-4888-8888-000000000004', '11111111-1111-4111-8111-111111111111', 'Archived', '{"demo":true,"receipt_number":"DEMO-WH-ARCHIVED"}', 'Synthetic archived demo receipt', true, '2026-06-12T08:00:00Z')
 on conflict (id) do update set action_type = excluded.action_type, is_demo = true;
+
+insert into public.export_contracts (
+  id, organization_id, output_report_id, supplier_id, base44_id, contract_no, contract_pi_number, certificate_no,
+  contract_date, stock_pool, coffee_type, coffee_grade, destination_country, buyer_name, payment_terms,
+  expected_payment_date, export_bags, export_kg, export_sample_kg, actual_shipped_kg, pricing_method,
+  price_per_lb_usd, total_lb, contract_rate_etb, rate_status, rate_confirmed_date,
+  total_export_value_usd, total_export_value_etb, total_materials_etb, total_costs_etb, reject_sales_etb,
+  grand_total_revenue_etb, profit_etb, profit_usd, profit_margin_pct, total_received_usd, total_received_etb,
+  balance_etb, payment_status, status, remark, is_demo, archived_at
+) values
+  ('eeeeeeee-eeee-4eee-8eee-000000000001', '11111111-1111-4111-8111-111111111111', 'dddddddd-dddd-4ddd-8ddd-000000000001', '33333333-3333-4333-8333-000000000001', null, 'DEMO-EXP-001-2026', 'DEMO-PI-001', 'DEMO-CERT-001', '2026-06-09', 'Fresh', 'Unwashed Lekempti', 'Grade 2', 'Germany', 'Demo Hamburg Buyer', 'Letter of Credit (LC)', '2026-07-10', 6, 360, 0, 360, 'per_lb', 2.85, 793.656, 120, 'Rate Confirmed', '2026-06-09', 2261.92, 271430.35, 15000, 35000, 12000, 283430.35, 248430.35, 2070.25, 87.650, 1000, 120000, 151430.35, 'Partial', 'In Progress', 'Synthetic demo export contract with partial payment', true, null),
+  ('eeeeeeee-eeee-4eee-8eee-000000000002', '11111111-1111-4111-8111-111111111111', 'dddddddd-dddd-4ddd-8ddd-000000000001', '33333333-3333-4333-8333-000000000001', null, 'DEMO-EXP-ARCHIVED-2026', 'DEMO-PI-ARCH', null, '2026-06-10', 'Fresh', 'Unwashed Lekempti', 'Grade 3', 'Italy', 'Demo Archived Buyer', 'Cash Against Documents (CAD)', null, 1, 60, 0, 60, 'per_lb', 2.50, 132.276, 120, 'Rate Confirmed', '2026-06-10', 330.69, 39682.80, 0, 5000, 0, 39682.80, 34682.80, 289.02, 87.400, 0, 0, 39682.80, 'Unpaid', 'Pending', 'Synthetic archived export contract', true, '2026-06-11T08:00:00Z')
+on conflict (id) do update set export_kg = excluded.export_kg, total_export_value_etb = excluded.total_export_value_etb, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.export_contract_costs (id, organization_id, export_contract_id, name, amount_etb, is_demo)
+values
+  ('efc00000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-000000000001', 'Demo freight', 20000, true),
+  ('efc00000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-000000000002', 'Demo archive handling', 5000, true)
+on conflict (id) do update set amount_etb = excluded.amount_etb, is_demo = true;
+
+insert into public.export_contract_materials (id, organization_id, export_contract_id, name, quantity, unit_cost_etb, total_cost_etb, is_demo)
+values
+  ('efa00000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-000000000001', 'Demo Jute Bags', 6, 2500, 15000, true)
+on conflict (id) do update set quantity = excluded.quantity, total_cost_etb = excluded.total_cost_etb, is_demo = true;
+
+insert into public.export_contract_payments (id, organization_id, export_contract_id, payment_date, amount_usd, actual_rate_etb, amount_etb, bank_name, reference_no, note, is_demo)
+values
+  ('efb00000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-000000000001', '2026-06-20', 1000, 120, 120000, 'Demo Bank', 'DEMO-SWIFT-001', 'Synthetic partial export payment', true)
+on conflict (id) do update set amount_etb = excluded.amount_etb, is_demo = true;
+
+insert into public.buyer_inspections (
+  id, organization_id, export_contract_id, base44_id, inspection_date, buyer_name, coffee_type,
+  kg_to_inspect, sample_kg_taken, result, kg_approved, linked_contract_no,
+  rejection_reason, kg_rejected, action_taken, notes, is_demo, archived_at
+) values
+  ('f1111111-1111-4111-8111-000000000001', '11111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-000000000001', null, '2026-06-08', 'Demo Hamburg Buyer', 'Unwashed Lekempti', 240, 4, 'Passed', 236, 'DEMO-EXP-001-2026', null, null, null, 'Synthetic passed buyer inspection', true, null)
+on conflict (id) do update set sample_kg_taken = excluded.sample_kg_taken, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.stock_movements (
+  id, organization_id, supplier_id, source_type, source_id, movement_type, stock_pool, coffee_type,
+  quantity_kg, occurred_at, notes, is_demo, archived_at
+) values
+  ('99999999-9999-4999-8999-000000000401', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', 'export_contract', 'eeeeeeee-eeee-4eee-8eee-000000000001', 'export_contract_deduction', 'export_available', 'Unwashed Lekempti', 360, '2026-06-09T08:00:00Z', 'Synthetic export contract stock deduction', true, null),
+  ('99999999-9999-4999-8999-000000000402', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', 'export_contract', 'eeeeeeee-eeee-4eee-8eee-000000000002', 'export_contract_deduction', 'export_available', 'Unwashed Lekempti', 60, '2026-06-10T08:00:00Z', 'Synthetic archived export contract stock deduction', true, '2026-06-11T08:00:00Z'),
+  ('99999999-9999-4999-8999-000000000501', '11111111-1111-4111-8111-111111111111', null, 'buyer_inspection', 'f1111111-1111-4111-8111-000000000001', 'buyer_inspection_sample', 'export_available', 'Unwashed Lekempti', 4, '2026-06-08T08:00:00Z', 'Synthetic buyer inspection sample deduction', true, null)
+on conflict (id) do update set quantity_kg = excluded.quantity_kg, is_demo = true, archived_at = excluded.archived_at;

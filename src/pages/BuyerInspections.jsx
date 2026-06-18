@@ -1,6 +1,11 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { buyerInspectionService } from '@/services/buyerInspectionService';
+import { exportService } from '@/services/exportService';
+import { outputService } from '@/services/outputService';
+import { sampleService } from '@/services/sampleService';
+import { supplierService } from '@/services/supplierService';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -259,23 +264,23 @@ export default function BuyerInspections() {
 
   const { data: inspections = [], isLoading } = useQuery({
     queryKey: ['buyer-inspections'],
-    queryFn: () => base44.entities.BuyerInspection.list('-inspection_date', 5000),
+    queryFn: () => buyerInspectionService.list(),
   });
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
+    queryFn: () => supplierService.list(),
   });
   const { data: contracts = [] } = useQuery({
     queryKey: ['export-contracts'],
-    queryFn: () => base44.entities.ExportContract.list('-contract_date', 500),
+    queryFn: () => exportService.list(),
   });
   const { data: outputReports = [] } = useQuery({
     queryKey: ['output-reports'],
-    queryFn: () => base44.entities.OutputReport.list('-created_date', 500),
+    queryFn: () => outputService.list(),
   });
   const { data: sampleLogs = [] } = useQuery({
     queryKey: ['sample-logs'],
-    queryFn: () => base44.entities.SampleLog.list(),
+    queryFn: () => sampleService.list(),
   });
 
   const coffeeTypes = useMemo(() => {
@@ -289,22 +294,7 @@ export default function BuyerInspections() {
   );
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
-      const created = await base44.entities.BuyerInspection.create(data);
-      // Auto-create Recleaning ProcessingLog entry when Failed + Reprocess
-      if (created.result === 'Failed' && created.action_taken === 'Reprocess') {
-        await base44.entities.ProcessingLog.create({
-          entry_type: 'Recleaning',
-          buyer_name: created.buyer_name,
-          inspection_ref: created.id,
-          date: created.inspection_date,
-          coffee_type: created.coffee_type,
-          actual_weighed_kg: created.kg_rejected || 0,
-          remark: `Auto-created from failed buyer inspection — ${created.rejection_reason || ''}`,
-        });
-      }
-      return created;
-    },
+    mutationFn: data => buyerInspectionService.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['buyer-inspections'] });
       queryClient.invalidateQueries({ queryKey: ['processing-logs'] });
@@ -314,7 +304,7 @@ export default function BuyerInspections() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.BuyerInspection.update(id, data),
+    mutationFn: ({ id, data }) => buyerInspectionService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buyer-inspections'] });
       setDialogOpen(false);
@@ -323,7 +313,7 @@ export default function BuyerInspections() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: id => base44.entities.BuyerInspection.delete(id),
+    mutationFn: id => buyerInspectionService.archive(id, 'Archived from demo buyer inspection page'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buyer-inspections'] });
       setDeleteTarget(null);

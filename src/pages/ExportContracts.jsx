@@ -1,6 +1,11 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { exportService } from '@/services/exportService';
+import { outputService } from '@/services/outputService';
+import { supplierService } from '@/services/supplierService';
+import { sampleService } from '@/services/sampleService';
+import { buyerInspectionService } from '@/services/buyerInspectionService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
@@ -483,7 +488,7 @@ export default function ExportContracts() {
 
   const { data: contracts = [], isLoading, fromCache, lastUpdated } = useOfflineQuery('export-contracts', {
     queryKey: ['export-contracts'],
-    queryFn: () => base44.entities.ExportContract.list('-contract_date', 5000),
+    queryFn: () => exportService.list(),
     staleTime: 60000,
   });
 
@@ -510,19 +515,19 @@ export default function ExportContracts() {
   }, [contracts]);
   const { data: outputReports = [] } = useQuery({
     queryKey: ['output-reports'],
-    queryFn: () => base44.entities.OutputReport.list('-date', 500),
+    queryFn: () => outputService.list(),
   });
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
+    queryFn: () => supplierService.list(),
   });
   const { data: inspections = [] } = useQuery({
     queryKey: ['buyer-inspections'],
-    queryFn: () => base44.entities.BuyerInspection.list(),
+    queryFn: () => buyerInspectionService.list(),
   });
   const { data: sampleLogs = [] } = useQuery({
     queryKey: ['sample-logs'],
-    queryFn: () => base44.entities.SampleLog.list(),
+    queryFn: () => sampleService.list(),
   });
 
   const masterCoffeeTypes = useMemo(() => {
@@ -533,7 +538,7 @@ export default function ExportContracts() {
   const { available: availableStock, availableRecleaned } = useAvailableStock(outputReports, contracts, inspections, sampleLogs);
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.ExportContract.create(data),
+    mutationFn: data => exportService.create(data),
     onSuccess: (rec) => {
       queryClient.invalidateQueries({ queryKey: ['export-contracts'] });
       setDialogOpen(false);
@@ -541,15 +546,18 @@ export default function ExportContracts() {
     },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ExportContract.update(id, data),
+    mutationFn: ({ id, data }) => exportService.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['export-contracts'] }); setDialogOpen(false); setEditRecord(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: id => base44.entities.ExportContract.delete(id),
+    mutationFn: id => exportService.archive(id, 'Archived from demo export contract page'),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['export-contracts'] }); setDeleteTarget(null); },
   });
   const paymentMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ExportContract.update(id, data),
+    mutationFn: ({ id, data }) => {
+      const contract = contracts.find((item) => item.id === id);
+      return exportService.update(id, { ...contract, ...data });
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['export-contracts'] }),
   });
 
