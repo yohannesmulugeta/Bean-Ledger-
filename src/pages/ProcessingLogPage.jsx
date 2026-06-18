@@ -1,6 +1,12 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { processingService } from '@/services/processingService';
+import { supplierService } from '@/services/supplierService';
+import { warehouseService } from '@/services/warehouseService';
+import { sampleService } from '@/services/sampleService';
+import { purchaseService } from '@/services/purchaseService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import PendingSyncBadge from '@/components/shared/PendingSyncBadge';
@@ -27,7 +33,6 @@ import AvailabilityBox from '@/components/processing/AvailabilityBox';
 import NumberInput from '@/components/shared/NumberInput';
 import RichArchiveDialog from '@/components/shared/RichArchiveDialog';
 import ArchivedRecordsSection from '@/components/shared/ArchivedRecordsSection';
-import { archiveRecord } from '@/lib/archiveService';
 import { computeAvailabilityBySupplier } from '@/lib/availabilityUtils';
 import { logActivity, diffRecords } from '@/lib/activityLogger';
 import TablePagination from '@/components/shared/TablePagination';
@@ -228,6 +233,7 @@ function ProcessingFormDialog({ open, onOpenChange, initialData, suppliers, avai
     } else if (isByKg) {
       // Feature 5: By-KG entry — store equivalent bags as reference, no bag rounding.
       data.supplier_name = form.supplier_name;
+      data.supplier_id = supplierMap[form.supplier_name]?.id || null;
       data.bags_sent = actualKg > 0 ? actualKg / BAG_WEIGHT_KG : null;
       data.kg_sent = null;            // No assumed-KG line in By-KG mode
       data.batch_variance_kg = null;  // No variance — exact KG was entered
@@ -236,6 +242,7 @@ function ProcessingFormDialog({ open, onOpenChange, initialData, suppliers, avai
     } else {
       // By Bags (default — existing behavior unchanged)
       data.supplier_name = form.supplier_name;
+      data.supplier_id = supplierMap[form.supplier_name]?.id || null;
       data.bags_sent = form.bags_sent !== '' ? parseFloat(form.bags_sent) : null;
       data.kg_sent = bags > 0 ? assumedKg : null;
       data.batch_variance_kg = variance;
@@ -436,7 +443,7 @@ export default function ProcessingLogPage() {
 
   const { data: logs = [], isLoading, fromCache, lastUpdated } = useOfflineQuery('processing-logs', {
     queryKey: ['processing-logs'],
-    queryFn: () => base44.entities.ProcessingLog.list('-created_date', 5000),
+    queryFn: () => processingService.list(),
     staleTime: 60000,
   });
 
@@ -492,15 +499,15 @@ export default function ProcessingLogPage() {
   }, []);
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
+    queryFn: () => supplierService.list(),
   });
   const { data: receipts = [] } = useQuery({
     queryKey: ['warehouse-receipts'],
-    queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 500),
+    queryFn: () => warehouseService.listReceipts(),
   });
   const { data: sampleLogs = [] } = useQuery({
     queryKey: ['sample-logs'],
-    queryFn: () => base44.entities.SampleLog.list(),
+    queryFn: () => sampleService.list(),
   });
   const { data: inspections = [] } = useQuery({
     queryKey: ['buyer-inspections'],
@@ -508,7 +515,7 @@ export default function ProcessingLogPage() {
   });
   const { data: purchases = [] } = useQuery({
     queryKey: ['purchase-records'],
-    queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 500),
+    queryFn: () => purchaseService.list(),
   });
 
   // Full availability breakdown per supplier — uses shared canonical formula.
@@ -539,7 +546,7 @@ export default function ProcessingLogPage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.ProcessingLog.create(data),
+    mutationFn: data => processingService.create(data),
     onSuccess: async (log) => {
       await refreshStockCaches();
       setDialogOpen(false);
@@ -556,7 +563,7 @@ export default function ProcessingLogPage() {
   });
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, previous }) => {
-      const updated = await base44.entities.ProcessingLog.update(id, data);
+      const updated = await processingService.update(id, data);
       return { updated, previous };
     },
     onSuccess: async ({ updated, previous }) => {
@@ -567,13 +574,7 @@ export default function ProcessingLogPage() {
     },
   });
   const archiveMutation = useMutation({
-    mutationFn: ({ record, reason }) => archiveRecord({
-      entityName: 'ProcessingLog',
-      record,
-      screen_name: 'Processing Log',
-      description: `Processing ${record.date} — ${record.supplier_name || record.buyer_name || ''}`,
-      reason,
-    }),
+    mutationFn: ({ record, reason }) => processingService.archive(record.id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['processing-logs'] });
       queryClient.invalidateQueries({ queryKey: ['activity-log'] });

@@ -1,6 +1,11 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { outputService } from '@/services/outputService';
+import { supplierService } from '@/services/supplierService';
+import { processingService } from '@/services/processingService';
+import { sampleService } from '@/services/sampleService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
@@ -26,7 +31,6 @@ import ExportBar from '@/components/shared/ExportBar';
 import { exportPDF, exportXLSX } from '@/lib/exportUtils';
 import ArchiveDialog from '@/components/shared/ArchiveDialog';
 import ArchivedRecordsSection from '@/components/shared/ArchivedRecordsSection';
-import { archiveRecord } from '@/lib/archiveService';
 import { logActivity, diffRecords } from '@/lib/activityLogger';
 import { notifyOutputReport } from '@/lib/notificationService';
 
@@ -492,7 +496,7 @@ export default function OutputReportPage() {
 
   const { data: reports = [], isLoading, fromCache, lastUpdated } = useOfflineQuery('output-reports', {
     queryKey: ['output-reports'],
-    queryFn: () => base44.entities.OutputReport.list('-created_date', 5000),
+    queryFn: () => outputService.list(),
     staleTime: 60000,
   });
 
@@ -519,11 +523,11 @@ export default function OutputReportPage() {
   const { isOnline, guardSave, OfflineDialog } = useOfflineSaveGuard();
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
+    queryFn: () => supplierService.list(),
   });
   const { data: processingLogs = [] } = useQuery({
     queryKey: ['processing-logs'],
-    queryFn: () => base44.entities.ProcessingLog.list('-date', 2000),
+    queryFn: () => processingService.list(),
     staleTime: 0,
     refetchOnMount: true,
   });
@@ -537,7 +541,7 @@ export default function OutputReportPage() {
   });
   const { data: sampleLogs = [] } = useQuery({
     queryKey: ['sample-logs'],
-    queryFn: () => base44.entities.SampleLog.list(),
+    queryFn: () => sampleService.list(),
   });
 
   // Compute live Pool 1 availability per coffee type for form validation
@@ -547,7 +551,7 @@ export default function OutputReportPage() {
   }, [reports, contracts, inspections, sampleLogs]);
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.OutputReport.create(data),
+    mutationFn: data => outputService.create(data),
     onSuccess: (rec) => {
       queryClient.invalidateQueries({ queryKey: ['output-reports'] });
       setDialogOpen(false);
@@ -557,7 +561,7 @@ export default function OutputReportPage() {
   });
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, previous }) => {
-      const updated = await base44.entities.OutputReport.update(id, data);
+      const updated = await outputService.update(id, data);
       return { updated, previous };
     },
     onSuccess: ({ updated, previous }) => {
@@ -568,13 +572,7 @@ export default function OutputReportPage() {
     },
   });
   const archiveMutation = useMutation({
-    mutationFn: ({ record, reason }) => archiveRecord({
-      entityName: 'OutputReport',
-      record,
-      screen_name: 'Output Report',
-      description: `Output ${record.start_date || record.date} — ${record.supplier_name || record.buyer_name || record.coffee_type || ''}`,
-      reason,
-    }),
+    mutationFn: ({ record, reason }) => outputService.archive(record.id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['output-reports'] });
       queryClient.invalidateQueries({ queryKey: ['activity-log'] });

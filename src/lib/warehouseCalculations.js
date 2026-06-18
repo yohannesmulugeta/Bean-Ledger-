@@ -26,8 +26,15 @@ export function calculateSupplierAvailableKg(stockMovements = [], supplierId = n
   return stockMovements
     .filter((movement) => !movement.archived_at)
     .filter((movement) => !supplierId || movement.supplier_id === supplierId)
-    .filter((movement) => movement.movement_type === 'warehouse_received')
-    .reduce((sum, movement) => sum + toNumber(movement.quantity_kg), 0);
+    .reduce((sum, movement) => {
+      if (movement.movement_type === 'warehouse_received' || movement.movement_type === 'stock_adjustment') {
+        return sum + toNumber(movement.quantity_kg);
+      }
+      if (movement.movement_type === 'sample_deduction' || movement.movement_type === 'processing_deduction') {
+        return sum - toNumber(movement.quantity_kg);
+      }
+      return sum;
+    }, 0);
 }
 
 export function archiveWarehouseRecord(record, archivedAt = new Date().toISOString()) {

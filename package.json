@@ -15,6 +15,7 @@
     "migration:base44:phase3": "node scripts/migration/phase3-validate-base44-export.mjs",
     "test:phase4": "node scripts/tests/purchase-calculations.test.mjs",
     "test:phase5": "node scripts/tests/warehouse-workflow.test.mjs",
+    "test:phase6": "node scripts/tests/processing-output-workflow.test.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },

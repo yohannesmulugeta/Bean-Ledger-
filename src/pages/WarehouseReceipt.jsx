@@ -256,7 +256,7 @@ export default function WarehouseReceiptPage() {
         </PageHeader>
 
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Demo Environment: warehouse receipts and stock movements are synthetic. Supplier available KG currently uses warehouse received KG only; samples and processing will be added in later phases.
+          Demo Environment: warehouse receipts and stock movements are synthetic. Supplier available KG now reflects warehouse receipts minus sample and processing deductions.
         </div>
 
         <div className="relative mb-4 max-w-xs">

@@ -118,6 +118,48 @@ insert into public.stock_movements (
   ('99999999-9999-4999-8999-000000000004', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000003', '44444444-4444-4444-8444-000000000003', '88888888-8888-4888-8888-000000000004', 'warehouse_receipt', '88888888-8888-4888-8888-000000000004', 'warehouse_received', 'supplier_available', 1173, '2026-06-08T08:00:00Z', 'Synthetic archived receipt', true, '2026-06-12T08:00:00Z')
 on conflict (id) do update set quantity_kg = excluded.quantity_kg, is_demo = true, archived_at = excluded.archived_at;
 
+insert into public.sample_logs (
+  id, organization_id, supplier_id, purchase_record_id, warehouse_receipt_id, base44_id,
+  sample_type, supplier_name, coffee_type, coffee_code, sample_date, sample_datetime,
+  sample_kg, company_recipient, keeper_name, remark, is_demo, archived_at
+) values
+  ('bbbbbbbb-bbbb-4bbb-8bbb-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000001', '88888888-8888-4888-8888-000000000001', null, 'Warehouse', 'Demo Wollega Cooperative', 'Unwashed Lekempti', 'DEMO/WOL/001/2026', '2026-06-04', '2026-06-04T09:00:00Z', 12, 'Demo Lab', 'Demo Keeper', 'Synthetic demo sample deduction', true, null),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-000000000002', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', '44444444-4444-4444-8444-000000000002', '88888888-8888-4888-8888-000000000002', null, 'Warehouse', 'Demo Guji Washing Station', 'Washed Guji', 'DEMO/GUJ/002/2026', '2026-06-06', '2026-06-06T09:00:00Z', 5, 'Demo Lab', 'Demo Keeper', 'Synthetic archived sample deduction', true, '2026-06-07T09:00:00Z')
+on conflict (id) do update set sample_kg = excluded.sample_kg, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.processing_logs (
+  id, organization_id, supplier_id, purchase_record_id, warehouse_receipt_id, base44_id,
+  entry_type, entry_mode, processing_date, supplier_name, coffee_type, coffee_code,
+  bags_sent, kg_sent, actual_weighed_kg, batch_variance_kg, batch_no, remark, is_demo, archived_at
+) values
+  ('cccccccc-cccc-4ccc-8ccc-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000001', '88888888-8888-4888-8888-000000000001', null, 'Standard', 'By Bags', '2026-06-06', 'Demo Wollega Cooperative', 'Unwashed Lekempti', 'DEMO/WOL/001/2026', 10, 850, 850, 0, 'DEMO-BATCH-001', 'Synthetic demo processing deduction', true, null),
+  ('cccccccc-cccc-4ccc-8ccc-000000000002', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', '44444444-4444-4444-8444-000000000002', '88888888-8888-4888-8888-000000000002', null, 'Standard', 'By KG', '2026-06-07', 'Demo Guji Washing Station', 'Washed Guji', 'DEMO/GUJ/002/2026', null, null, 300, null, 'DEMO-BATCH-002', 'Synthetic demo by-KG processing deduction', true, null),
+  ('cccccccc-cccc-4ccc-8ccc-000000000003', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000004', '88888888-8888-4888-8888-000000000003', null, 'Standard', 'By KG', '2026-06-12', 'Demo Wollega Cooperative', 'Unwashed Lekempti', 'DEMO/WOL/004/2026', null, null, 100, null, 'DEMO-BATCH-ARCHIVED', 'Synthetic archived processing deduction', true, '2026-06-13T09:00:00Z')
+on conflict (id) do update set actual_weighed_kg = excluded.actual_weighed_kg, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.output_reports (
+  id, organization_id, processing_log_id, supplier_id, base44_id, entry_type,
+  start_date, end_date, supplier_name, coffee_type, total_kg_processed,
+  export_bags, export_kg, reject_bags, reject_kg, waste_kg, reject_pct, waste_pct,
+  export_status, registrar_name, remark, is_demo, archived_at
+) values
+  ('dddddddd-dddd-4ddd-8ddd-000000000001', '11111111-1111-4111-8111-111111111111', 'cccccccc-cccc-4ccc-8ccc-000000000001', '33333333-3333-4333-8333-000000000001', null, 'Standard', '2026-06-06', '2026-06-06', 'Demo Wollega Cooperative', 'Unwashed Lekempti', 850, 10, 600, 2, 170, 80, 20, 9.4118, 'Available for Export', 'Demo Registrar', 'Synthetic demo output report', true, null)
+on conflict (id) do update set export_kg = excluded.export_kg, reject_kg = excluded.reject_kg, waste_kg = excluded.waste_kg, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.stock_movements (
+  id, organization_id, supplier_id, purchase_record_id, warehouse_receipt_id,
+  source_type, source_id, movement_type, stock_pool, quantity_kg,
+  occurred_at, notes, is_demo, archived_at
+) values
+  ('99999999-9999-4999-8999-000000000101', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000001', '88888888-8888-4888-8888-000000000001', 'sample_log', 'bbbbbbbb-bbbb-4bbb-8bbb-000000000001', 'sample_deduction', 'supplier_available', 12, '2026-06-04T09:00:00Z', 'Synthetic demo sample deduction', true, null),
+  ('99999999-9999-4999-8999-000000000102', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', '44444444-4444-4444-8444-000000000002', '88888888-8888-4888-8888-000000000002', 'sample_log', 'bbbbbbbb-bbbb-4bbb-8bbb-000000000002', 'sample_deduction', 'supplier_available', 5, '2026-06-06T09:00:00Z', 'Synthetic archived sample deduction', true, '2026-06-07T09:00:00Z'),
+  ('99999999-9999-4999-8999-000000000201', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000001', '88888888-8888-4888-8888-000000000001', 'processing_log', 'cccccccc-cccc-4ccc-8ccc-000000000001', 'processing_deduction', 'supplier_available', 850, '2026-06-06T08:00:00Z', 'Synthetic demo processing deduction', true, null),
+  ('99999999-9999-4999-8999-000000000202', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', '44444444-4444-4444-8444-000000000002', '88888888-8888-4888-8888-000000000002', 'processing_log', 'cccccccc-cccc-4ccc-8ccc-000000000002', 'processing_deduction', 'supplier_available', 300, '2026-06-07T08:00:00Z', 'Synthetic demo by-KG processing deduction', true, null),
+  ('99999999-9999-4999-8999-000000000203', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000004', '88888888-8888-4888-8888-000000000003', 'processing_log', 'cccccccc-cccc-4ccc-8ccc-000000000003', 'processing_deduction', 'supplier_available', 100, '2026-06-12T08:00:00Z', 'Synthetic archived processing deduction', true, '2026-06-13T09:00:00Z'),
+  ('99999999-9999-4999-8999-000000000301', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', null, null, 'output_report', 'dddddddd-dddd-4ddd-8ddd-000000000001', 'output_export', 'export_available', 600, '2026-06-06T18:00:00Z', 'Synthetic demo export output', true, null),
+  ('99999999-9999-4999-8999-000000000302', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', null, null, 'output_report', 'dddddddd-dddd-4ddd-8ddd-000000000001', 'output_reject', 'reject_available', 170, '2026-06-06T18:00:00Z', 'Synthetic demo reject output', true, null)
+on conflict (id) do update set quantity_kg = excluded.quantity_kg, is_demo = true, archived_at = excluded.archived_at;
+
 insert into public.warehouse_receipt_history (id, warehouse_receipt_id, organization_id, action_type, changes, reason, is_demo, created_at)
 values
   ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001', '88888888-8888-4888-8888-000000000001', '11111111-1111-4111-8111-111111111111', 'Created', '{"demo":true,"receipt_number":"DEMO-WH-001"}', 'Synthetic demo receipt seed', true, '2026-06-03T08:00:00Z'),

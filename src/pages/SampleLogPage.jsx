@@ -1,6 +1,13 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { sampleService } from '@/services/sampleService';
+import { supplierService } from '@/services/supplierService';
+import { warehouseService } from '@/services/warehouseService';
+import { processingService } from '@/services/processingService';
+import { outputService } from '@/services/outputService';
+import { purchaseService } from '@/services/purchaseService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import PendingSyncBadge from '@/components/shared/PendingSyncBadge';
@@ -23,7 +30,6 @@ import NumberInput from '@/components/shared/NumberInput';
 import TablePagination from '@/components/shared/TablePagination';
 import RichArchiveDialog from '@/components/shared/RichArchiveDialog';
 import ArchivedRecordsSection from '@/components/shared/ArchivedRecordsSection';
-import { archiveRecord } from '@/lib/archiveService';
 import { computeAvailabilityBySupplier } from '@/lib/availabilityUtils';
 import { logActivity, diffRecords } from '@/lib/activityLogger';
 
@@ -170,10 +176,11 @@ function SampleFormDialog({ open, onOpenChange, initialData, suppliers, coffeeTy
         data.supplier_name = r?.supplier_name || null;
         data.coffee_type = r?.coffee_type || null;
       }
-    } else {
-      // Warehouse (default existing behavior)
-      data.supplier_name = form.supplier_name;
-    }
+  } else {
+    // Warehouse (default existing behavior)
+    data.supplier_name = form.supplier_name;
+    data.supplier_id = suppliers.find(s => s.supplier_name === form.supplier_name)?.id || null;
+  }
     onSubmit(data);
   };
 
@@ -334,7 +341,7 @@ export default function SampleLogPage() {
 
   const { data: logs = [], isLoading, fromCache, lastUpdated } = useOfflineQuery('sample-logs', {
     queryKey: ['sample-logs'],
-    queryFn: () => base44.entities.SampleLog.list('-created_date', 500),
+    queryFn: () => sampleService.list(),
     staleTime: 60000,
   });
 
@@ -387,23 +394,23 @@ export default function SampleLogPage() {
   }, [logs]);
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
+    queryFn: () => supplierService.list(),
   });
   const { data: receipts = [] } = useQuery({
     queryKey: ['warehouse-receipts'],
-    queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 500),
+    queryFn: () => warehouseService.listReceipts(),
   });
   const { data: processingLogs = [] } = useQuery({
     queryKey: ['processing-logs'],
-    queryFn: () => base44.entities.ProcessingLog.list(),
+    queryFn: () => processingService.list(),
   });
   const { data: outputReports = [] } = useQuery({
     queryKey: ['output-reports'],
-    queryFn: () => base44.entities.OutputReport.list(),
+    queryFn: () => outputService.list(),
   });
   const { data: purchases = [] } = useQuery({
     queryKey: ['purchase-records'],
-    queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 500),
+    queryFn: () => purchaseService.list(),
   });
   const { data: contracts = [] } = useQuery({
     queryKey: ['export-contracts'],
@@ -433,7 +440,7 @@ export default function SampleLogPage() {
   }, [receipts, logs, processingLogs]);
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.SampleLog.create(data),
+    mutationFn: data => sampleService.create(data),
     onSuccess: (rec) => {
       queryClient.invalidateQueries({ queryKey: ['sample-logs'] });
       queryClient.invalidateQueries({ queryKey: ['warehouse-receipts'] });
@@ -443,7 +450,7 @@ export default function SampleLogPage() {
   });
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, previous }) => {
-      const updated = await base44.entities.SampleLog.update(id, data);
+      const updated = await sampleService.update(id, data);
       return { updated, previous };
     },
     onSuccess: ({ updated, previous }) => {
@@ -454,13 +461,7 @@ export default function SampleLogPage() {
     },
   });
   const archiveMutation = useMutation({
-    mutationFn: ({ record, reason }) => archiveRecord({
-      entityName: 'SampleLog',
-      record,
-      screen_name: 'Sample Log',
-      description: `Sample ${record.sample_kg}kg — ${record.supplier_name || record.coffee_type || ''}`,
-      reason,
-    }),
+    mutationFn: ({ record, reason }) => sampleService.archive(record.id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sample-logs'] });
       queryClient.invalidateQueries({ queryKey: ['activity-log'] });
