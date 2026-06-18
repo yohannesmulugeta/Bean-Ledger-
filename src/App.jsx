@@ -2,10 +2,9 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import { AuthProvider } from '@/lib/AuthContext';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
-import Purchases from '@/pages/Purchases';
 import WarehousePage from '@/pages/WarehousePage';
 import Processing from '@/pages/Processing';
 import Exports from '@/pages/Exports';
@@ -31,21 +30,32 @@ import WarehouseReceiptReport from '@/pages/WarehouseReceiptReport';
 import UsersManagement from '@/pages/UsersManagement';
 import DataAudit from '@/pages/DataAudit';
 import ModuleRouteGuard from '@/components/ModuleRouteGuard';
+import Login from '@/pages/Login';
 
 // ── Public Demo Mode — no auth required, render immediately ──────────────
 const AuthenticatedApp = () => {
+  const { isAuthenticated, isLoadingAuth, authChecked } = useAuth();
+
+  if (isLoadingAuth || !authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading demo session...
+      </div>
+    );
+  }
+
   return (
     <Routes>
-      {/* Auth pages redirect to dashboard */}
-      <Route path="/login" element={<Navigate to="/" replace />} />
-      <Route path="/register" element={<Navigate to="/" replace />} />
-      <Route path="/signup" element={<Navigate to="/" replace />} />
-      <Route path="/forgot-password" element={<Navigate to="/" replace />} />
-      <Route path="/reset-password" element={<Navigate to="/" replace />} />
+      {/* Demo auth pages */}
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
+      <Route path="/signup" element={<Navigate to="/login" replace />} />
+      <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
+      <Route path="/reset-password" element={<Navigate to="/login" replace />} />
       {/* All app routes — no auth guard */}
-      <Route element={<AppLayout />}>
+      <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />}>
         <Route path="/" element={<ModuleRouteGuard path="/"><Dashboard /></ModuleRouteGuard>} />
-        <Route path="/purchases" element={<ModuleRouteGuard path="/purchases"><Purchases /></ModuleRouteGuard>} />
+        <Route path="/purchases" element={<Navigate to="/purchase-registration" replace />} />
         <Route path="/warehouse" element={<ModuleRouteGuard path="/warehouse"><WarehousePage /></ModuleRouteGuard>} />
         <Route path="/processing" element={<ModuleRouteGuard path="/processing"><Processing /></ModuleRouteGuard>} />
         <Route path="/exports" element={<ModuleRouteGuard path="/exports"><Exports /></ModuleRouteGuard>} />
@@ -71,7 +81,7 @@ const AuthenticatedApp = () => {
         <Route path="/users-management" element={<ModuleRouteGuard path="/users-management"><UsersManagement /></ModuleRouteGuard>} />
         <Route path="/data-audit" element={<ModuleRouteGuard path="/data-audit"><DataAudit /></ModuleRouteGuard>} />
       </Route>
-      <Route path="*" element={<PageNotFound />} />
+      <Route path="*" element={isAuthenticated ? <PageNotFound /> : <Navigate to="/login" replace />} />
     </Routes>
   );
 };

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,26 +12,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Pencil, Trash2, Search, ChevronUp, ChevronDown, ChevronsUpDown, AlertTriangle, Paperclip, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import RoleGuard from '@/components/RoleGuard';
-import { useRole } from '@/lib/role-hooks';
 import PaymentHistoryPanel, { parsePayments, PaymentStatusBadge } from '@/components/purchases/PaymentHistoryPanel';
 import { calcTotalPaid, calcBalance, calcPaymentStatus } from '@/lib/paymentUtils';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import PurchaseAttachmentsPanel from '@/components/attachments/PurchaseAttachmentsPanel';
 import RichArchiveDialog from '@/components/shared/RichArchiveDialog';
 import AuditRecordBanner from '@/components/shared/AuditRecordBanner';
-import ArchivedRecordsSection from '@/components/shared/ArchivedRecordsSection';
-import { archivePurchaseWithCascade, countPurchaseCascade } from '@/lib/archiveService';
-import { logActivity, diffRecords } from '@/lib/activityLogger';
 import { InlineWarningList } from '@/components/notifications/InlineWarning';
 import { getPurchaseWarnings } from '@/lib/formWarnings';
-import { notifyNewPurchase } from '@/lib/notificationService';
 import NumberInput from '@/components/shared/NumberInput';
 import TablePagination from '@/components/shared/TablePagination';
 import ActiveFilters from '@/components/shared/ActiveFilters';
 import { useDuplicateCheck } from '@/hooks/useDuplicateCheck';
 import DuplicateWarningBanner from '@/components/purchases/DuplicateWarningBanner';
 import DuplicateConfirmDialog from '@/components/purchases/DuplicateConfirmDialog';
-import DuplicateReport from '@/components/purchases/DuplicateReport';
+import { supplierService } from '@/services/supplierService';
+import { purchaseService } from '@/services/purchaseService';
 
 function fmt(n, decimals = 2) {
   if (n == null || isNaN(n)) return '—';
@@ -478,7 +472,11 @@ function PurchaseFormDialog({ open, onOpenChange, initialData, suppliers, allRec
               </TabsTrigger>
             </TabsList>
             <TabsContent value="details">{formContent}</TabsContent>
-            <TabsContent value="attachments"><PurchaseAttachmentsPanel purchase={initialData} /></TabsContent>
+            <TabsContent value="attachments">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                Purchase attachments remain on the legacy Base44 path until the attachment migration phase.
+              </div>
+            </TabsContent>
           </Tabs>
         ) : formContent}
       </DialogContent>
@@ -488,7 +486,6 @@ function PurchaseFormDialog({ open, onOpenChange, initialData, suppliers, allRec
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PurchaseRegistration() {
-  const { role: userRole } = useRole();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
@@ -507,19 +504,19 @@ export default function PurchaseRegistration() {
 
   const { data: purchases = [], isLoading } = useQuery({
     queryKey: ['purchase-records'],
-    queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 5000),
+    queryFn: () => purchaseService.list(),
   });
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
+    queryFn: () => supplierService.list(),
   });
   const { data: receipts = [] } = useQuery({
     queryKey: ['warehouse-receipts'],
-    queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 500),
+    queryFn: () => purchaseService.listWarehouseReceipts(),
   });
   const { data: allPurchaseAttachments = [] } = useQuery({
     queryKey: ['attachments-purchase-all'],
-    queryFn: () => base44.entities.Attachment.filter({ entity_type: 'purchase_record' }),
+    queryFn: () => purchaseService.listPurchaseAttachments(),
   });
 
   // Auto-open editor when URL contains ?edit=<id> (used from Reports detail panel)
@@ -569,64 +566,29 @@ export default function PurchaseRegistration() {
   const [pendingDuplicateOf, setPendingDuplicateOf] = useState(null);
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.PurchaseRecord.create(data),
-    onSuccess: (record) => {
+    mutationFn: data => purchaseService.create(data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-records'] });
       setDialogOpen(false);
-      notifyNewPurchase(record).catch(() => {});
-      logActivity({
-        action_type: 'Created',
-        screen_name: 'Purchase Registration',
-        entity_type: 'PurchaseRecord',
-        entity_id: record.id,
-        record_description: `Purchase ${record.coffee_code || record.id} — ${record.supplier_name || ''}`,
-      });
-      // Log duplicate confirmation if applicable
-      if (pendingDuplicateOf) {
-        logActivity({
-          action_type: 'Edited',
-          screen_name: 'Purchase Registration',
-          entity_type: 'PurchaseRecord',
-          entity_id: record.id,
-          record_description: `Duplicate Confirmed — ${record.supplier_name || ''} on ${record.purchase_date || ''}`,
-          reason: `User confirmed duplicate purchase for ${record.supplier_name} on ${record.purchase_date} (existing: ${pendingDuplicateOf.coffee_code})`,
-        });
-        setPendingDuplicateOf(null);
-      }
+      setPendingDuplicateOf(null);
     },
   });
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, previous }) => {
-      const updated = await base44.entities.PurchaseRecord.update(id, data);
-      return { updated, previous };
-    },
-    onSuccess: ({ updated, previous }) => {
+    mutationFn: ({ id, data }) => purchaseService.update(id, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-records'] });
       setDialogOpen(false);
       setEditRecord(null);
-      logActivity({
-        action_type: 'Edited',
-        screen_name: 'Purchase Registration',
-        entity_type: 'PurchaseRecord',
-        entity_id: updated.id,
-        record_description: `Purchase ${updated.coffee_code || updated.id} — ${updated.supplier_name || ''}`,
-        changes: diffRecords(previous, updated),
-      });
     },
   });
   const archiveMutation = useMutation({
-    mutationFn: ({ purchase, reason }) => archivePurchaseWithCascade({ purchase, reason }),
+    mutationFn: ({ purchase, reason }) => purchaseService.archive(purchase.id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-records'] });
-      queryClient.invalidateQueries({ queryKey: ['warehouse-receipts'] });
-      queryClient.invalidateQueries({ queryKey: ['processing-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['sample-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['activity-log'] });
       setArchiveTarget(null);
       setArchiveCascade(null);
     },
   });
-
   const attachCountByPurchaseId = useMemo(() => {
     const map = {};
     allPurchaseAttachments.forEach(a => { map[a.entity_id] = (map[a.entity_id] || 0) + 1; });
@@ -702,7 +664,6 @@ export default function PurchaseRegistration() {
         onDismiss={() => { setAuditIssueTitle(''); setAuditRecordId(''); setAuditFound(null); }}
       />
       <PageHeader title="Purchase Registration" description="Record and manage coffee purchases">
-        {userRole === 'admin' && <DuplicateReport />}
         <Button onClick={() => { setEditRecord(null); setDialogOpen(true); }} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Plus className="w-4 h-4 mr-1" /> New Purchase
         </Button>
@@ -831,7 +792,7 @@ export default function PurchaseRegistration() {
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={async () => {
-                            const c = await countPurchaseCascade(p);
+                            const c = await purchaseService.countCascade(p);
                             setArchiveCascade(c);
                             setArchiveTarget(p);
                           }}>
@@ -892,23 +853,9 @@ export default function PurchaseRegistration() {
         onConfirm={(reason) => archiveMutation.mutate({ purchase: archiveTarget, reason })}
       />
 
-      <ArchivedRecordsSection
-        entityName="PurchaseRecord"
-        screenName="Purchase Registration"
-        queryKey={['purchase-records']}
-        describeRecord={(r) => `Purchase ${r.coffee_code || r.id} — ${r.supplier_name || ''}`}
-        onExtraInvalidate={(qc) => {
-          qc.invalidateQueries({ queryKey: ['warehouse-receipts'] });
-          qc.invalidateQueries({ queryKey: ['processing-logs'] });
-          qc.invalidateQueries({ queryKey: ['sample-logs'] });
-        }}
-        columns={[
-          { label: 'Coffee Code', render: (r) => <span className="font-mono">{r.coffee_code || '—'}</span> },
-          { label: 'Date', render: (r) => r.purchase_date ? format(new Date(r.purchase_date), 'd MMM yyyy') : '—' },
-          { label: 'Supplier', render: (r) => r.supplier_name },
-          { label: 'Grand Total', render: (r) => fmt(r.grand_total_etb) },
-        ]}
-      />
+      <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+        Archived demo purchases are retained with archived_at. Restore and cross-module cascade behavior remain on the later Supabase migration path.
+      </div>
     </div>
     </RoleGuard>
   );

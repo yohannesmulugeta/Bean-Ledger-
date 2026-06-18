@@ -13,6 +13,7 @@
     "migration:base44:package": "node scripts/migration/package-base44-export.mjs",
     "migration:base44:reconcile": "node scripts/migration/reconcile-base44-export.mjs",
     "migration:base44:phase3": "node scripts/migration/phase3-validate-base44-export.mjs",
+    "test:phase4": "node scripts/tests/purchase-calculations.test.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },

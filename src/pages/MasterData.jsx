@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supplierService } from '@/services/supplierService';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ChevronsUpDown, Search, Phone, Upload, AlertTriangle, XCircle } from 'lucide-react';
 import RoleGuard from '@/components/RoleGuard';
-import DownloadBackupButton from '@/components/admin/DownloadBackupButton';
 import * as XLSX from 'xlsx';
 import TablePagination from '@/components/shared/TablePagination';
 
@@ -218,19 +217,19 @@ export default function MasterData() {
 
   const { data: suppliers = [], isLoading } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
+    queryFn: () => supplierService.list(),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Supplier.create(data),
+    mutationFn: (data) => supplierService.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['suppliers'] }); setDialogOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Supplier.update(id, data),
+    mutationFn: ({ id, data }) => supplierService.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['suppliers'] }); setDialogOpen(false); setEditRecord(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Supplier.delete(id),
+    mutationFn: (id) => supplierService.archive(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['suppliers'] }); setDeleteTarget(null); },
   });
 
@@ -308,10 +307,10 @@ export default function MasterData() {
           try {
             const existing = nameMap[name.toLowerCase()];
             if (existing) {
-              await base44.entities.Supplier.update(existing.id, data);
+              await supplierService.update(existing.id, data);
               updated++;
             } else {
-              await base44.entities.Supplier.create(data);
+              await supplierService.create(data);
               created++;
             }
           } catch (err) {
@@ -350,7 +349,6 @@ export default function MasterData() {
     <div>
       <PageHeader title="Master Data" description="Manage supplier records and opening stock">
         <div className="flex gap-2 flex-wrap">
-          <DownloadBackupButton />
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>
             <Upload className="w-4 h-4 mr-1" /> {importing ? 'Importing...' : 'Import Excel'}
@@ -458,12 +456,12 @@ export default function MasterData() {
       <AlertDialog open={!!deleteTarget} onOpenChange={v => !v && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Supplier?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete <strong>{deleteTarget?.supplier_name}</strong>.</AlertDialogDescription>
+            <AlertDialogTitle>Archive Supplier?</AlertDialogTitle>
+            <AlertDialogDescription>This will archive <strong>{deleteTarget?.supplier_name}</strong> without permanently deleting it.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => deleteMutation.mutate(deleteTarget.id)}>Delete</AlertDialogAction>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => deleteMutation.mutate(deleteTarget.id)}>Archive</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

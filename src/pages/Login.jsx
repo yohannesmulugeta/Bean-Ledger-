@@ -1,15 +1,13 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Mail, Lock, Loader2, Coffee } from "lucide-react";
+import { LogIn, User, Lock, Loader2, Coffee } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function Login() {
-  const locationState = window.history.state?.usr || {};
-  const [email, setEmail] = useState(locationState?.email || "");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,25 +17,25 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await base44.auth.loginViaEmailPassword(email, password);
+      await authService.login({ username, password });
       window.location.href = "/";
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "Invalid demo username or password");
     } finally {
       setLoading(false);
     }
   };
 
   const fillDemo = () => {
-    setEmail("demo@beanledgerexport.com");
-    setPassword("Demo@2026");
+    setUsername("admin");
+    setPassword("password");
   };
 
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome to BeanLedger Export"
-      subtitle="Coffee Export Operations Platform"
+      title="KKGT Flow Demo Login"
+      subtitle="Demo Environment - synthetic data only"
       footer={null}
     >
       {error && (
@@ -46,38 +44,37 @@ export default function Login() {
         </div>
       )}
 
+      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        This local demo login is not production-grade security. Supabase Auth will replace it in a later phase.
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="username">Username</Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
-              id="email"
-              type="email"
-              autoComplete="email"
+              id="username"
+              type="text"
+              autoComplete="username"
               autoFocus
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="pl-10 h-12"
               required
             />
           </div>
         </div>
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              Forgot password?
-            </Link>
-          </div>
+          <Label htmlFor="password">Password</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="password"
               type="password"
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="pl-10 h-12"
@@ -89,23 +86,22 @@ export default function Login() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Signing in…
+              Signing in...
             </>
           ) : (
-            "Sign in"
+            "Sign in to demo"
           )}
         </Button>
       </form>
 
-      {/* Demo credentials */}
       <div className="mt-6 p-4 rounded-xl border border-dashed" style={{ borderColor: '#B08D57', background: '#F7F3EE' }}>
         <div className="flex items-center gap-2 mb-2">
           <Coffee className="w-4 h-4 flex-shrink-0" style={{ color: '#B08D57' }} />
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#1F2A24' }}>Demo Access</p>
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#1F2A24' }}>Demo Credentials</p>
         </div>
         <div className="space-y-1 text-xs text-muted-foreground">
-          <p><span className="font-medium text-foreground">Email:</span> demo@beanledgerexport.com</p>
-          <p><span className="font-medium text-foreground">Password:</span> Demo@2026</p>
+          <p><span className="font-medium text-foreground">Username:</span> admin</p>
+          <p><span className="font-medium text-foreground">Password:</span> password</p>
         </div>
         <button
           type="button"
@@ -116,13 +112,6 @@ export default function Login() {
           Fill demo credentials
         </button>
       </div>
-
-      <p className="text-center text-sm text-muted-foreground mt-6">
-        Don't have an account?{" "}
-        <Link to="/register" className="text-primary font-medium hover:underline">
-          Sign up
-        </Link>
-      </p>
     </AuthLayout>
   );
 }

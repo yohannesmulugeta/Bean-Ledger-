@@ -1,7 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import NotificationBell from '@/components/notifications/NotificationBell';
 import OfflineIndicator from '@/components/shared/OfflineIndicator';
 import PWAUpdatePrompt from '@/components/shared/PWAUpdatePrompt';
 import SyncStatusPanel from '@/components/shared/SyncStatusPanel';
@@ -9,10 +8,14 @@ import OfflineModeNotice from '@/components/shared/OfflineModeNotice';
 import useOfflineSync from '@/hooks/useOfflineSync';
 import { useRole, ROLES } from '@/lib/role-hooks';
 import PendingApprovalScreen from '@/components/PendingApprovalScreen';
+import { useAuth } from '@/lib/AuthContext';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 export default function AppLayout() {
   const { role } = useRole();
-  const { queue, isSyncing, pendingCount, failedCount, retryAction, clearFailed, refresh: refreshSync } = useOfflineSync();
+  const { logout } = useAuth();
+  const { queue, isSyncing, pendingCount, retryAction, clearFailed } = useOfflineSync();
 
   if (role === ROLES.UNASSIGNED) {
     return (
@@ -31,8 +34,15 @@ export default function AppLayout() {
         {/* Top header bar */}
         <header className="sticky top-0 z-30 h-14 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 gap-3 shadow-sm">
           <OfflineIndicator />
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+            Demo Environment
+            <span className="font-normal text-amber-700">Synthetic data only</span>
+          </div>
           <div className="flex-1" />
-          <NotificationBell />
+          <Button variant="outline" size="sm" onClick={() => logout(true)} className="h-8 gap-1">
+            <LogOut className="w-3.5 h-3.5" />
+            Sign out
+          </Button>
         </header>
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden">
           <div className="px-3 sm:p-4 lg:p-8 min-w-0">
