@@ -23,7 +23,14 @@ export function readDemoStore() {
   }
 
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    const fresh = freshDemoStore();
+    const merged = { ...fresh, ...parsed };
+    Object.keys(fresh).forEach((key) => {
+      if (!Array.isArray(merged[key])) merged[key] = fresh[key];
+    });
+    storage.setItem(STORE_KEY, JSON.stringify(merged));
+    return merged;
   } catch {
     const fresh = freshDemoStore();
     storage.setItem(STORE_KEY, JSON.stringify(fresh));

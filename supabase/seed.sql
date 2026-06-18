@@ -71,7 +71,8 @@ insert into public.purchase_records (
 ) values
   ('44444444-4444-4444-8444-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', null, true, 'DEMO/WOL/001/2026', '2026-06-02', 'Demo Wollega Cooperative', 'Demo Agent A', 'Wollega', 'Unwashed Lekempti', 1700, 1666, 5400, 3),
   ('44444444-4444-4444-8444-000000000002', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', null, true, 'DEMO/GUJ/002/2026', '2026-06-04', 'Demo Guji Washing Station', 'Demo Agent B', 'Guji', 'Washed Guji', 850, 850, 6200, 2.5),
-  ('44444444-4444-4444-8444-000000000003', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000003', null, true, 'DEMO/SID/003/2026', '2026-06-07', 'Demo Sidama Export Farm', 'Demo Agent C', 'Sidama', 'Natural Sidama', 1190, 1173, 5800, 3.5)
+  ('44444444-4444-4444-8444-000000000003', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000003', null, true, 'DEMO/SID/003/2026', '2026-06-07', 'Demo Sidama Export Farm', 'Demo Agent C', 'Sidama', 'Natural Sidama', 1190, null, 5800, 3.5),
+  ('44444444-4444-4444-8444-000000000004', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', null, true, 'DEMO/WOL/004/2026', '2026-06-10', 'Demo Wollega Cooperative', 'Demo Agent A', 'Wollega', 'Unwashed Lekempti', 680, 680, 5500, 3)
 on conflict (id) do update set coffee_code = excluded.coffee_code, is_demo = true;
 
 insert into public.purchase_additional_costs (id, purchase_record_id, base44_id, is_demo, name, amount_etb)
@@ -93,3 +94,34 @@ on conflict (id) do update set amount_etb = excluded.amount_etb, is_demo = true;
 select public.recalculate_purchase_record('44444444-4444-4444-8444-000000000001');
 select public.recalculate_purchase_record('44444444-4444-4444-8444-000000000002');
 select public.recalculate_purchase_record('44444444-4444-4444-8444-000000000003');
+select public.recalculate_purchase_record('44444444-4444-4444-8444-000000000004');
+
+insert into public.warehouse_receipts (
+  id, organization_id, purchase_record_id, supplier_id, base44_id, receipt_number,
+  coffee_code, supplier_name, received_date, dispatch_kg, received_kg, shortage_kg,
+  warehouse_name, status, notes, is_demo, archived_at
+) values
+  ('88888888-8888-4888-8888-000000000001', '11111111-1111-4111-8111-111111111111', '44444444-4444-4444-8444-000000000001', '33333333-3333-4333-8333-000000000001', null, 'DEMO-WH-001', 'DEMO/WOL/001/2026', 'Demo Wollega Cooperative', '2026-06-03', 1700, 1666, 34, 'Demo Warehouse A', 'received', 'Synthetic partial shortage receipt', true, null),
+  ('88888888-8888-4888-8888-000000000002', '11111111-1111-4111-8111-111111111111', '44444444-4444-4444-8444-000000000002', '33333333-3333-4333-8333-000000000002', null, 'DEMO-WH-002', 'DEMO/GUJ/002/2026', 'Demo Guji Washing Station', '2026-06-05', 850, 850, 0, 'Demo Warehouse A', 'received', 'Synthetic exact receipt', true, null),
+  ('88888888-8888-4888-8888-000000000003', '11111111-1111-4111-8111-111111111111', '44444444-4444-4444-8444-000000000004', '33333333-3333-4333-8333-000000000001', null, 'DEMO-WH-003', 'DEMO/WOL/004/2026', 'Demo Wollega Cooperative', '2026-06-11', 680, 680, 0, 'Demo Warehouse B', 'received', 'Synthetic second receipt for supplier availability', true, null),
+  ('88888888-8888-4888-8888-000000000004', '11111111-1111-4111-8111-111111111111', '44444444-4444-4444-8444-000000000003', '33333333-3333-4333-8333-000000000003', null, 'DEMO-WH-ARCHIVED', 'DEMO/SID/003/2026', 'Demo Sidama Export Farm', '2026-06-08', 1190, 1173, 17, 'Demo Warehouse Archive', 'archived', 'Synthetic archived receipt', true, '2026-06-12T08:00:00Z')
+on conflict (id) do update set received_kg = excluded.received_kg, shortage_kg = excluded.shortage_kg, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.stock_movements (
+  id, organization_id, supplier_id, purchase_record_id, warehouse_receipt_id,
+  source_type, source_id, movement_type, stock_pool, quantity_kg,
+  occurred_at, notes, is_demo, archived_at
+) values
+  ('99999999-9999-4999-8999-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000001', '88888888-8888-4888-8888-000000000001', 'warehouse_receipt', '88888888-8888-4888-8888-000000000001', 'warehouse_received', 'supplier_available', 1666, '2026-06-03T08:00:00Z', 'Synthetic partial shortage receipt', true, null),
+  ('99999999-9999-4999-8999-000000000002', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', '44444444-4444-4444-8444-000000000002', '88888888-8888-4888-8888-000000000002', 'warehouse_receipt', '88888888-8888-4888-8888-000000000002', 'warehouse_received', 'supplier_available', 850, '2026-06-05T08:00:00Z', 'Synthetic exact receipt', true, null),
+  ('99999999-9999-4999-8999-000000000003', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '44444444-4444-4444-8444-000000000004', '88888888-8888-4888-8888-000000000003', 'warehouse_receipt', '88888888-8888-4888-8888-000000000003', 'warehouse_received', 'supplier_available', 680, '2026-06-11T08:00:00Z', 'Synthetic second receipt for supplier availability', true, null),
+  ('99999999-9999-4999-8999-000000000004', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000003', '44444444-4444-4444-8444-000000000003', '88888888-8888-4888-8888-000000000004', 'warehouse_receipt', '88888888-8888-4888-8888-000000000004', 'warehouse_received', 'supplier_available', 1173, '2026-06-08T08:00:00Z', 'Synthetic archived receipt', true, '2026-06-12T08:00:00Z')
+on conflict (id) do update set quantity_kg = excluded.quantity_kg, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.warehouse_receipt_history (id, warehouse_receipt_id, organization_id, action_type, changes, reason, is_demo, created_at)
+values
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000001', '88888888-8888-4888-8888-000000000001', '11111111-1111-4111-8111-111111111111', 'Created', '{"demo":true,"receipt_number":"DEMO-WH-001"}', 'Synthetic demo receipt seed', true, '2026-06-03T08:00:00Z'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000002', '88888888-8888-4888-8888-000000000002', '11111111-1111-4111-8111-111111111111', 'Created', '{"demo":true,"receipt_number":"DEMO-WH-002"}', 'Synthetic demo receipt seed', true, '2026-06-05T08:00:00Z'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000003', '88888888-8888-4888-8888-000000000003', '11111111-1111-4111-8111-111111111111', 'Created', '{"demo":true,"receipt_number":"DEMO-WH-003"}', 'Synthetic demo receipt seed', true, '2026-06-11T08:00:00Z'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-000000000004', '88888888-8888-4888-8888-000000000004', '11111111-1111-4111-8111-111111111111', 'Archived', '{"demo":true,"receipt_number":"DEMO-WH-ARCHIVED"}', 'Synthetic archived demo receipt', true, '2026-06-12T08:00:00Z')
+on conflict (id) do update set action_type = excluded.action_type, is_demo = true;
