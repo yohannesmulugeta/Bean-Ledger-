@@ -1,6 +1,6 @@
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,9 +14,9 @@ import { format } from 'date-fns';
 import NumberInput from '@/components/shared/NumberInput';
 import ArchiveDialog from '@/components/shared/ArchiveDialog';
 import ArchivedRecordsSection from '@/components/shared/ArchivedRecordsSection';
-import { archiveRecord } from '@/lib/archiveService';
-import { logActivity, diffRecords } from '@/lib/activityLogger';
 import TablePagination from '@/components/shared/TablePagination';
+import { bagService } from '@/services/bagService';
+import { supplierService } from '@/services/supplierService';
 
 function fmt(n, d = 0) {
   if (n == null || isNaN(n)) return '—';
@@ -267,40 +267,39 @@ export default function BagReceiptsSection() {
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers-for-bagledger'],
-    queryFn: () => base44.entities.Supplier.list('supplier_name', 500),
+    queryFn: () => supplierService.list(),
   });
 
   const { data: rawBagReceipts = [], isLoading } = useQuery({
     queryKey: ['bag-receipts'],
-    queryFn: () => base44.entities.BagReceipt.list('-date', 500),
+    queryFn: () => bagService.listReceipts(),
   });
-  const bagReceipts = rawBagReceipts.filter(r => !r.archived);
+  const bagReceipts = rawBagReceipts.filter(r => !r.archived && !r.archived_at);
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.BagReceipt.create(data),
-    onSuccess: (rec) => {
+    mutationFn: data => bagService.createReceipt(data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bag-receipts'] });
+      queryClient.invalidateQueries({ queryKey: ['bag-summary'] });
       setDialogOpen(false);
-      const label = rec.receipt_mode === 'agent' ? rec.agent_name : rec.supplier_name;
-      logActivity({ action_type: 'Created', screen_name: 'Bag Ledger', entity_type: 'BagReceipt', entity_id: rec.id, record_description: `Bag receipt ${rec.bags_received} bags — ${label}` });
     },
   });
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, previous }) => {
-      const updated = await base44.entities.BagReceipt.update(id, data);
+      const updated = await bagService.updateReceipt(id, data);
       return { updated, previous };
     },
-    onSuccess: ({ updated, previous }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bag-receipts'] });
+      queryClient.invalidateQueries({ queryKey: ['bag-summary'] });
       setDialogOpen(false); setEditRecord(null);
-      logActivity({ action_type: 'Edited', screen_name: 'Bag Ledger', entity_type: 'BagReceipt', entity_id: updated.id, record_description: `Bag receipt — ${updated.supplier_name || updated.agent_name}`, changes: diffRecords(previous, updated) });
     },
   });
   const archiveMutation = useMutation({
-    mutationFn: ({ record, reason }) => archiveRecord({ entityName: 'BagReceipt', record, screen_name: 'Bag Ledger', description: `Bag receipt ${record.bags_received} bags`, reason }),
+    mutationFn: ({ record, reason }) => bagService.archiveReceipt(record.id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bag-receipts'] });
-      queryClient.invalidateQueries({ queryKey: ['activity-log'] });
+      queryClient.invalidateQueries({ queryKey: ['bag-summary'] });
       setArchiveTarget(null);
     },
   });

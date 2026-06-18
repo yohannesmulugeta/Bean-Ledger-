@@ -1,6 +1,6 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import NumberInput from '@/components/shared/NumberInput';
 import { exportMaterialsPDF, exportMaterialsExcel, fmt } from '@/lib/materialsExport';
 import TablePagination from '@/components/shared/TablePagination';
+import { materialService } from '@/services/materialService';
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 
@@ -128,7 +129,7 @@ export default function GeneralPurchaseTab() {
 
   const { data: allEntries = [], isLoading } = useQuery({
     queryKey: ['material-register-entries'],
-    queryFn: () => base44.entities.MaterialRegisterEntry.list('-date', 1000),
+    queryFn: () => materialService.list(),
   });
 
   // Backwards-compat: treat entries without a category as 'general'
@@ -138,15 +139,15 @@ export default function GeneralPurchaseTab() {
   );
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.MaterialRegisterEntry.create(data),
+    mutationFn: data => materialService.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['material-register-entries'] }); setDialogOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.MaterialRegisterEntry.update(id, data),
+    mutationFn: ({ id, data }) => materialService.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['material-register-entries'] }); setDialogOpen(false); setEditRecord(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: id => base44.entities.MaterialRegisterEntry.delete(id),
+    mutationFn: id => materialService.archive(id, 'Archived from demo general purchase tab'),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['material-register-entries'] }); setDeleteTarget(null); },
   });
 

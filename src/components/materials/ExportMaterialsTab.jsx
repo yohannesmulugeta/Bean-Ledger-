@@ -1,6 +1,6 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import NumberInput from '@/components/shared/NumberInput';
 import { exportMaterialsPDF, exportMaterialsExcel, fmt } from '@/lib/materialsExport';
 import TablePagination from '@/components/shared/TablePagination';
+import { materialService } from '@/services/materialService';
 
 const ITEM_TYPES = ['Bag', 'Craft', 'Plaster', 'Green Pro', 'Bulk Bag Load'];
 const BAG_SIZES = ['30kg', '50kg', '60kg'];
@@ -190,7 +191,7 @@ export default function ExportMaterialsTab() {
 
   const { data: allEntries = [], isLoading } = useQuery({
     queryKey: ['material-register-entries'],
-    queryFn: () => base44.entities.MaterialRegisterEntry.list('-date', 1000),
+    queryFn: () => materialService.list(),
   });
 
   const entries = useMemo(
@@ -199,15 +200,15 @@ export default function ExportMaterialsTab() {
   );
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.MaterialRegisterEntry.create(data),
+    mutationFn: data => materialService.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['material-register-entries'] }); setDialogOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.MaterialRegisterEntry.update(id, data),
+    mutationFn: ({ id, data }) => materialService.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['material-register-entries'] }); setDialogOpen(false); setEditRecord(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: id => base44.entities.MaterialRegisterEntry.delete(id),
+    mutationFn: id => materialService.archive(id, 'Archived from demo export materials tab'),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['material-register-entries'] }); setDeleteTarget(null); },
   });
 

@@ -17,6 +17,7 @@
     "test:phase5": "node scripts/tests/warehouse-workflow.test.mjs",
     "test:phase6": "node scripts/tests/processing-output-workflow.test.mjs",
     "test:phase7": "node scripts/tests/export-contract-workflow.test.mjs",
+    "test:phase8": "node scripts/tests/bag-material-workflow.test.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },

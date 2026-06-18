@@ -213,3 +213,61 @@ insert into public.stock_movements (
   ('99999999-9999-4999-8999-000000000402', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', 'export_contract', 'eeeeeeee-eeee-4eee-8eee-000000000002', 'export_contract_deduction', 'export_available', 'Unwashed Lekempti', 60, '2026-06-10T08:00:00Z', 'Synthetic archived export contract stock deduction', true, '2026-06-11T08:00:00Z'),
   ('99999999-9999-4999-8999-000000000501', '11111111-1111-4111-8111-111111111111', null, 'buyer_inspection', 'f1111111-1111-4111-8111-000000000001', 'buyer_inspection_sample', 'export_available', 'Unwashed Lekempti', 4, '2026-06-08T08:00:00Z', 'Synthetic buyer inspection sample deduction', true, null)
 on conflict (id) do update set quantity_kg = excluded.quantity_kg, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.bag_receipts (
+  id, organization_id, supplier_id, warehouse_receipt_id, base44_id, receipt_mode, agent_name,
+  supplier_name, date, warehouse_received_kg, bags_received, source, note, is_demo, archived_at
+) values
+  ('b8000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '88888888-8888-4888-8888-000000000001', null, 'agent', 'Demo Agent A', 'Demo Wollega Cooperative', '2026-06-03', 1666, 100, 'warehouse', 'Synthetic demo warehouse-linked bag receipt', true, null),
+  ('b8000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', null, null, 'supplier', 'Demo Agent B', 'Demo Guji Washing Station', '2026-06-05', null, 40, 'manual', 'Synthetic supplier-level bag receipt', true, null),
+  ('b8000000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000003', null, null, 'supplier', 'Demo Agent C', 'Demo Sidama Export Farm', '2026-06-08', null, 10, 'manual', 'Synthetic archived bag receipt', true, '2026-06-09T08:00:00Z')
+on conflict (id) do update set bags_received = excluded.bags_received, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.reject_bag_usages (
+  id, organization_id, supplier_id, base44_id, reject_mode, agent_name, supplier_name,
+  date, bags_used, amount_etb, note, is_demo, archived_at
+) values
+  ('b8100000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', null, 'agent', 'Demo Agent A', null, '2026-06-07', 12, 1836, 'Synthetic reject bag usage', true, null)
+on conflict (id) do update set bags_used = excluded.bags_used, amount_etb = excluded.amount_etb, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.supplier_bag_returns (
+  id, organization_id, supplier_id, base44_id, agent_name, supplier_name, return_date,
+  bags_returned, note, is_demo, archived_at
+) values
+  ('b8200000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', null, 'Demo Agent A', null, '2026-06-12', 30, 'Synthetic partial bag return', true, null)
+on conflict (id) do update set bags_returned = excluded.bags_returned, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.supplier_bag_payments (
+  id, organization_id, supplier_id, base44_id, agent_name, supplier_name, payment_date,
+  bank_name, branch_account, reference_no, payment_type, amount_etb, note, is_demo, archived_at
+) values
+  ('b8300000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', null, 'Demo Agent A', null, '2026-06-13', 'Demo Bank', 'Demo Branch', 'DEMO-BAG-CPV-001', 'Advance', 1000, 'Synthetic partial reject bag cash payment', true, null)
+on conflict (id) do update set amount_etb = excluded.amount_etb, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.supplier_bag_settlements (
+  id, organization_id, supplier_id, base44_id, agent_name, supplier_name, settlement_date,
+  bags_received_adjustment, bags_used_adjustment, loss_percent_override,
+  bags_returned, bags_returned_date, bags_returned_count, bags_returned_note,
+  cash_paid, cash_paid_date, note, is_demo, archived_at
+) values
+  ('b8400000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', null, null, 'Demo Guji Washing Station', '2026-06-14', 2, 0, null, false, null, 0, null, false, null, 'Synthetic supplier bag settlement adjustment', true, null)
+on conflict (id) do update set bags_received_adjustment = excluded.bags_received_adjustment, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.material_register_entries (
+  id, organization_id, export_contract_id, base44_id, category, date, item_type, bag_size, entry_type,
+  item_name, quantity, unit_cost_etb, total_cost_etb, purpose, note, is_demo, archived_at
+) values
+  ('b8500000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', null, null, 'export', '2026-06-06', 'Bag', '60kg', 'Purchase', null, 80, 250, 20000, null, 'Synthetic export bag material purchase', true, null),
+  ('b8500000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-000000000001', null, 'export', '2026-06-09', 'Bag', '60kg', 'Usage', null, 6, null, null, null, 'Synthetic export contract material usage', true, null),
+  ('b8500000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', null, null, 'general', '2026-06-10', null, null, null, 'Demo Stationery', 5, 300, 1500, 'Office', 'Synthetic general material purchase', true, null),
+  ('b8500000-0000-4000-8000-000000000004', '11111111-1111-4111-8111-111111111111', null, null, 'export', '2026-06-11', 'Craft', null, 'Purchase', null, 20, 100, 2000, null, 'Synthetic archived material entry', true, '2026-06-12T08:00:00Z')
+on conflict (id) do update set quantity = excluded.quantity, total_cost_etb = excluded.total_cost_etb, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.material_movements (
+  id, organization_id, material_register_entry_id, export_contract_id, item_key, movement_type,
+  quantity, unit_cost_etb, total_cost_etb, occurred_at, notes, is_demo, archived_at
+) values
+  ('b8600000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'b8500000-0000-4000-8000-000000000001', null, 'Bag 60kg', 'material_purchase', 80, 250, 20000, '2026-06-06T08:00:00Z', 'Synthetic export bag material purchase', true, null),
+  ('b8600000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', 'b8500000-0000-4000-8000-000000000002', 'eeeeeeee-eeee-4eee-8eee-000000000001', 'Bag 60kg', 'material_usage', 6, null, null, '2026-06-09T08:00:00Z', 'Synthetic export contract material usage', true, null),
+  ('b8600000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', 'b8500000-0000-4000-8000-000000000004', null, 'Craft', 'material_purchase', 20, 100, 2000, '2026-06-11T08:00:00Z', 'Synthetic archived material entry', true, '2026-06-12T08:00:00Z')
+on conflict (id) do update set quantity = excluded.quantity, is_demo = true, archived_at = excluded.archived_at;

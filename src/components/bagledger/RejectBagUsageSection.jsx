@@ -1,6 +1,6 @@
+// @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,8 @@ import { format } from 'date-fns';
 import NumberInput from '@/components/shared/NumberInput';
 import TablePagination from '@/components/shared/TablePagination';
 import { useSupplierBagSummary } from '@/components/bagledger/SupplierBagSummary';
+import { bagService } from '@/services/bagService';
+import { supplierService } from '@/services/supplierService';
 
 export const REJECT_BAG_PRICE = 153;
 
@@ -193,25 +195,25 @@ export default function RejectBagUsageSection() {
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers-for-bagledger'],
-    queryFn: () => base44.entities.Supplier.list('supplier_name', 500),
+    queryFn: () => supplierService.list(),
   });
 
   const { data: usages = [], isLoading } = useQuery({
     queryKey: ['reject-bag-usages'],
-    queryFn: () => base44.entities.RejectBagUsage.list('-date', 500),
+    queryFn: () => bagService.listRejectUsages(),
   });
 
   const createMutation = useMutation({
-    mutationFn: data => base44.entities.RejectBagUsage.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reject-bag-usages'] }); setDialogOpen(false); },
+    mutationFn: data => bagService.createRejectUsage(data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reject-bag-usages'] }); queryClient.invalidateQueries({ queryKey: ['bag-summary'] }); setDialogOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.RejectBagUsage.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reject-bag-usages'] }); setDialogOpen(false); setEditRecord(null); },
+    mutationFn: ({ id, data }) => bagService.updateRejectUsage(id, data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reject-bag-usages'] }); queryClient.invalidateQueries({ queryKey: ['bag-summary'] }); setDialogOpen(false); setEditRecord(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: id => base44.entities.RejectBagUsage.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reject-bag-usages'] }); setDeleteTarget(null); },
+    mutationFn: id => bagService.archiveRejectUsage(id, 'Archived from demo reject bag usage page'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reject-bag-usages'] }); queryClient.invalidateQueries({ queryKey: ['bag-summary'] }); setDeleteTarget(null); },
   });
 
   return (

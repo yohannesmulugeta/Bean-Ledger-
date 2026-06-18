@@ -1,10 +1,12 @@
+// @ts-nocheck
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CheckCircle2, ChevronDown, ChevronRight, User, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import SupplierDetailPanel from './SupplierDetailPanel';
+import { bagService } from '@/services/bagService';
+import { supplierService } from '@/services/supplierService';
 
 export const REJECT_BAG_PRICE = 153;
 const LOSS_PCT = 1;
@@ -37,11 +39,11 @@ function buildSummaryRow({ key, received, used, returns, payments }) {
 }
 
 export function useSupplierBagSummary() {
-  const { data: bagReceipts = [], isLoading: l1 } = useQuery({ queryKey: ['bag-receipts'], queryFn: () => base44.entities.BagReceipt.list('-date', 500) });
-  const { data: usages = [], isLoading: l2 } = useQuery({ queryKey: ['reject-bag-usages'], queryFn: () => base44.entities.RejectBagUsage.list('-date', 500) });
-  const { data: payments = [], isLoading: l3 } = useQuery({ queryKey: ['supplier-bag-payments'], queryFn: () => base44.entities.SupplierBagPayment.list('-payment_date', 500) });
-  const { data: returns = [], isLoading: l4 } = useQuery({ queryKey: ['supplier-bag-returns'], queryFn: () => base44.entities.SupplierBagReturn.list('-return_date', 500) });
-  const { data: suppliers = [] } = useQuery({ queryKey: ['suppliers-for-bagledger'], queryFn: () => base44.entities.Supplier.list('supplier_name', 500) });
+  const { data: bagReceipts = [], isLoading: l1 } = useQuery({ queryKey: ['bag-receipts'], queryFn: () => bagService.listReceipts() });
+  const { data: usages = [], isLoading: l2 } = useQuery({ queryKey: ['reject-bag-usages'], queryFn: () => bagService.listRejectUsages() });
+  const { data: payments = [], isLoading: l3 } = useQuery({ queryKey: ['supplier-bag-payments'], queryFn: () => bagService.listPayments() });
+  const { data: returns = [], isLoading: l4 } = useQuery({ queryKey: ['supplier-bag-returns'], queryFn: () => bagService.listReturns() });
+  const { data: suppliers = [] } = useQuery({ queryKey: ['suppliers-for-bagledger'], queryFn: () => supplierService.list() });
 
   // Build agent-level summary from receipt_mode='agent' receipts and reject_mode='agent' usages
   const agentSummary = useMemo(() => {
