@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { reportService } from '@/services/reportService';
 import { format, startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,35 +43,16 @@ export default function WarehouseReceiptReport() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Fetch data
-  const { data: receipts = [], isLoading: loadingReceipts, refetch: refetchReceipts } = useQuery({
-    queryKey: ['wrr-receipts'],
-    queryFn: () => base44.entities.WarehouseReceipt.filter({ archived: false }, '-received_date', 5000),
+  const { data: snapshot = /** @type {any} */ ({}), isLoading: loadingReceipts, refetch: refetchReceipts } = useQuery({
+    queryKey: ['phase9-wrr-snapshot'],
+    queryFn: () => reportService.activeSnapshot(),
     staleTime: 60000,
   });
-
-  const { data: purchases = [] } = useQuery({
-    queryKey: ['wrr-purchases'],
-    queryFn: () => base44.entities.PurchaseRecord.filter({ archived: false }, '-purchase_date', 5000),
-    staleTime: 60000,
-  });
-
-  const { data: sampleLogs = [] } = useQuery({
-    queryKey: ['wrr-samples'],
-    queryFn: () => base44.entities.SampleLog.filter({ archived: false }, '-sample_date', 5000),
-    staleTime: 60000,
-  });
-
-  const { data: processingLogs = [] } = useQuery({
-    queryKey: ['wrr-processing'],
-    queryFn: () => base44.entities.ProcessingLog.filter({ archived: false }, '-date', 5000),
-    staleTime: 60000,
-  });
-
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ['wrr-suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
-    staleTime: 120000,
-  });
+  const receipts = snapshot.receipts || [];
+  const purchases = snapshot.purchases || [];
+  const sampleLogs = snapshot.sampleLogs || [];
+  const processingLogs = snapshot.processingLogs || [];
+  const suppliers = snapshot.suppliers || [];
 
   // Auto-refresh every 60s
   useEffect(() => {

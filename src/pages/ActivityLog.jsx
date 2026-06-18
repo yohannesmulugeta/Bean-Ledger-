@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { auditService } from '@/services/auditService';
 import PageHeader from '@/components/shared/PageHeader';
 import { useRole } from '@/lib/role-hooks';
 import { Input } from '@/components/ui/input';
@@ -59,7 +59,7 @@ export default function ActivityLog() {
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['activity-log'],
-    queryFn: () => base44.entities.ActivityLog.list('-created_date', 1000),
+    queryFn: () => auditService.list(),
     refetchInterval: 30000,
   });
 

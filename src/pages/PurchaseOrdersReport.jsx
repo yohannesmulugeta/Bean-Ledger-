@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { reportService } from '@/services/reportService';
 import { useRole } from '@/lib/role-hooks';
 import { Navigate } from 'react-router-dom';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -63,24 +63,14 @@ export default function PurchaseOrdersReport() {
     return () => clearInterval(interval);
   }, [queryClient]);
 
-  const { data: purchases = [], isLoading: loadingP } = useQuery({
-    queryKey: ['por-purchases'],
-    queryFn: () => base44.entities.PurchaseRecord.list('-purchase_date', 2000),
+  const { data: snapshot = /** @type {any} */ ({}), isLoading } = useQuery({
+    queryKey: ['phase9-por-snapshot'],
+    queryFn: () => reportService.snapshot(),
   });
-  const { data: receipts = [], isLoading: loadingR } = useQuery({
-    queryKey: ['por-receipts'],
-    queryFn: () => base44.entities.WarehouseReceipt.list('-received_date', 2000),
-  });
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
-  });
-  const { data: processingLogs = [] } = useQuery({
-    queryKey: ['por-processing'],
-    queryFn: () => base44.entities.ProcessingLog.list('-date', 2000),
-  });
-
-  const isLoading = loadingP || loadingR;
+  const purchases = snapshot.purchases || [];
+  const receipts = snapshot.receipts || [];
+  const suppliers = snapshot.suppliers || [];
+  const processingLogs = snapshot.processingLogs || [];
 
   // Build enriched purchase list
   const enriched = useMemo(() => {

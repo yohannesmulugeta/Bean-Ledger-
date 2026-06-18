@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { auditService } from '@/services/auditService';
 import { Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -22,7 +22,7 @@ function ActionBadge({ type }) {
 export default function RecentActivity() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['activity-log-recent'],
-    queryFn: () => base44.entities.ActivityLog.list('-created_date', 10),
+    queryFn: async () => (await auditService.list()).slice(0, 10),
     refetchInterval: 30000,
     staleTime: 0,
   });

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { reportService } from '@/services/reportService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
@@ -1200,13 +1199,14 @@ function ExportContractsReport({ contracts }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Reports() {
-  const { data: purchases = [], fromCache, lastUpdated } = useOfflineQuery('purchase-records', { queryKey: ['purchase-records'], queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 1000), staleTime: 60000 });
-  const { data: receipts = [] } = useQuery({ queryKey: ['warehouse-receipts'], queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 1000) });
-  const { data: sampleLogs = [] } = useQuery({ queryKey: ['sample-logs'], queryFn: () => base44.entities.SampleLog.list('-created_date', 1000) });
-  const { data: processingLogs = [] } = useQuery({ queryKey: ['processing-logs'], queryFn: () => base44.entities.ProcessingLog.list('-created_date', 1000) });
-  const { data: outputReports = [] } = useQuery({ queryKey: ['output-reports'], queryFn: () => base44.entities.OutputReport.list('-date', 1000) });
-  const { data: suppliers = [] } = useQuery({ queryKey: ['suppliers'], queryFn: () => base44.entities.Supplier.list() });
-  const { data: exportContracts = [] } = useQuery({ queryKey: ['export-contracts'], queryFn: () => base44.entities.ExportContract.list('-export_date', 1000) });
+  const { data: snapshot = /** @type {any} */ ({}), fromCache, lastUpdated } = useOfflineQuery('phase9-report-snapshot', { queryKey: ['phase9-report-snapshot'], queryFn: () => reportService.snapshot(), staleTime: 60000 });
+  const purchases = snapshot.purchases || [];
+  const receipts = snapshot.receipts || [];
+  const sampleLogs = snapshot.sampleLogs || [];
+  const processingLogs = snapshot.processingLogs || [];
+  const outputReports = snapshot.outputReports || [];
+  const suppliers = snapshot.suppliers || [];
+  const exportContracts = snapshot.exportContracts || [];
 
   return (
     <RoleGuard allowedRoles={['admin']}>

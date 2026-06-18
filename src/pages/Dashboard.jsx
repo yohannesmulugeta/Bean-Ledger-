@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import {
   ShieldOff, Warehouse, Package, Coins, AlertCircle,
   RefreshCw, TrendingUp, Users, Factory, BarChart3, ClipboardCheck,
 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { reportService } from '@/services/reportService';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
 import { calcTotalPaid, calcPaymentStatus } from '@/lib/paymentUtils';
@@ -89,48 +88,19 @@ export default function Dashboard() {
   const location = useLocation();
   const accessDenied = location.state?.accessDenied;
 
-  const { data: purchaseRecords = [], isLoading: l1, fromCache: fromCachePurchases, lastUpdated } = useOfflineQuery('purchase-records', {
-    queryKey: ['purchase-records'],
-    queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 500),
+  const { data: snapshot = /** @type {any} */ ({}), isLoading, fromCache: fromCachePurchases, lastUpdated } = useOfflineQuery('phase9-dashboard-snapshot', {
+    queryKey: ['phase9-dashboard-snapshot'],
+    queryFn: () => reportService.snapshot(),
     staleTime: 60000,
   });
-  const { data: receipts = [], isLoading: l2 } = useQuery({
-    queryKey: ['warehouse-receipts'],
-    queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 500),
-    staleTime: 60000,
-  });
-  const { data: sampleLogs = [], isLoading: l3 } = useQuery({
-    queryKey: ['sample-logs'],
-    queryFn: () => base44.entities.SampleLog.list(),
-    staleTime: 60000,
-  });
-  const { data: processingLogs = [], isLoading: l4 } = useQuery({
-    queryKey: ['processing-logs'],
-    queryFn: () => base44.entities.ProcessingLog.list(),
-    staleTime: 60000,
-  });
-  const { data: outputReports = [], isLoading: l5 } = useQuery({
-    queryKey: ['output-reports'],
-    queryFn: () => base44.entities.OutputReport.list(),
-    staleTime: 60000,
-  });
-  const { data: suppliers = [], isLoading: l6 } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: () => base44.entities.Supplier.list(),
-    staleTime: 60000,
-  });
-  const { data: exportContracts = [], isLoading: l7 } = useQuery({
-    queryKey: ['export-contracts'],
-    queryFn: () => base44.entities.ExportContract.list('-export_date', 500),
-    staleTime: 60000,
-  });
-  const { data: inspections = [], isLoading: l8 } = useQuery({
-    queryKey: ['buyer-inspections'],
-    queryFn: () => base44.entities.BuyerInspection.list(),
-    staleTime: 60000,
-  });
-
-  const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8;
+  const purchaseRecords = snapshot.purchases || [];
+  const receipts = snapshot.receipts || [];
+  const sampleLogs = snapshot.sampleLogs || [];
+  const processingLogs = snapshot.processingLogs || [];
+  const outputReports = snapshot.outputReports || [];
+  const suppliers = snapshot.suppliers || [];
+  const exportContracts = snapshot.exportContracts || [];
+  const inspections = snapshot.buyerInspections || [];
 
   const filteredPurchaseRecords = useMemo(
     () => filterByDateRange(purchaseRecords, balanceRange, 'purchase_date'),

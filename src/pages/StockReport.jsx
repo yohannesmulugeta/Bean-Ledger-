@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { reportService } from '@/services/reportService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
@@ -153,14 +152,15 @@ export default function StockReport() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ supplier: 'all', coffeeType: 'all', showZero: false });
 
-  const { data: purchases = [] } = useQuery({ queryKey: ['purchase-records'], queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 500) });
-  const { data: receipts = [], refetch: refetchReceipts, fromCache: fromCacheReceipts, lastUpdated } = useOfflineQuery('warehouse-receipts', { queryKey: ['warehouse-receipts'], queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 500), staleTime: 60000 });
-  const { data: sampleLogs = [], refetch: refetchSamples } = useQuery({ queryKey: ['sample-logs'], queryFn: () => base44.entities.SampleLog.list() });
-  const { data: processingLogs = [], refetch: refetchProcessing } = useQuery({ queryKey: ['processing-logs'], queryFn: () => base44.entities.ProcessingLog.list('-created_date', 500) });
-  const { data: outputReports = [], refetch: refetchOutput } = useQuery({ queryKey: ['output-reports'], queryFn: () => base44.entities.OutputReport.list('-created_date', 500) });
-  const { data: suppliers = [] } = useQuery({ queryKey: ['suppliers'], queryFn: () => base44.entities.Supplier.list() });
-  const { data: contracts = [] } = useQuery({ queryKey: ['export-contracts'], queryFn: () => base44.entities.ExportContract.list() });
-  const { data: inspections = [] } = useQuery({ queryKey: ['buyer-inspections'], queryFn: () => base44.entities.BuyerInspection.list() });
+  const { data: snapshot = /** @type {any} */ ({}), refetch: refetchSnapshot, fromCache: fromCacheReceipts, lastUpdated } = useOfflineQuery('phase9-stock-snapshot', { queryKey: ['phase9-stock-snapshot'], queryFn: () => reportService.snapshot(), staleTime: 60000 });
+  const purchases = snapshot.purchases || [];
+  const receipts = snapshot.receipts || [];
+  const sampleLogs = snapshot.sampleLogs || [];
+  const processingLogs = snapshot.processingLogs || [];
+  const outputReports = snapshot.outputReports || [];
+  const suppliers = snapshot.suppliers || [];
+  const contracts = snapshot.exportContracts || [];
+  const inspections = snapshot.buyerInspections || [];
 
   // Two-pool breakdown per coffee type (Fresh + Recleaned)
   const { breakdown: poolBreakdown } = useMemo(
@@ -179,11 +179,11 @@ export default function StockReport() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      refetchReceipts(); refetchSamples(); refetchProcessing(); refetchOutput();
+      refetchSnapshot();
       setLastRefresh(new Date());
     }, 30000);
     return () => clearInterval(interval);
-  }, [refetchReceipts, refetchSamples, refetchProcessing, refetchOutput]);
+  }, [refetchSnapshot]);
 
   const supplierMap = useMemo(() => {
     const m = {};

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { reportService } from '@/services/reportService';
 import { calcTotalPaid, calcBalance, calcPaymentStatus } from '@/lib/paymentUtils';
 import { ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw } from 'lucide-react';
 import { computeAvailabilityBySupplier } from '@/lib/availabilityUtils';
@@ -42,10 +42,11 @@ export default function SupplierBalancesTable({ dateRange }) {
 
   const queryOpts = { staleTime: 60000 };
 
-  const { data: purchaseRecords = [] } = useQuery({ queryKey: ['purchase-records'], queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 500), ...queryOpts });
-  const { data: receipts = [] } = useQuery({ queryKey: ['warehouse-receipts'], queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 500), ...queryOpts });
-  const { data: sampleLogs = [] } = useQuery({ queryKey: ['sample-logs'], queryFn: () => base44.entities.SampleLog.list(), ...queryOpts });
-  const { data: processingLogs = [] } = useQuery({ queryKey: ['processing-logs'], queryFn: () => base44.entities.ProcessingLog.list(), ...queryOpts });
+  const { data: snapshot = /** @type {any} */ ({}) } = useQuery({ queryKey: ['phase9-supplier-balances-snapshot'], queryFn: () => reportService.snapshot(), ...queryOpts });
+  const purchaseRecords = snapshot.purchases || [];
+  const receipts = snapshot.receipts || [];
+  const sampleLogs = snapshot.sampleLogs || [];
+  const processingLogs = snapshot.processingLogs || [];
   // Pre-compute availability using the canonical formula (for warehouse waste display)
   const availMap = useMemo(() => computeAvailabilityBySupplier({
     receipts, purchases: purchaseRecords, sampleLogs, processingLogs,
@@ -130,7 +131,7 @@ export default function SupplierBalancesTable({ dateRange }) {
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const TH = ({ label, col, right }) => (
+  const TH = ({ label, col, right = false }) => (
     <th
       className={`px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground whitespace-nowrap bg-muted/80 ${right ? 'text-right' : 'text-left'}`}
       onClick={() => handleSort(col)}

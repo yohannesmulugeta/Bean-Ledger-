@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { reportService } from '@/services/reportService';
 import { useRole } from '@/lib/role-hooks';
 import runDataAudit from '@/lib/dataAudit';
 import AccessDenied from '@/components/AccessDenied';
@@ -23,42 +23,26 @@ const SEV_STYLE = {
   info: { badge: 'bg-blue-100 text-blue-700 border-blue-200', icon: Info, iconColor: 'text-blue-500', label: 'Info', dot: 'text-blue-500' },
 };
 
-const AUDIT_LIMIT = 5000;
 function useAuditData() {
-  const s  = useQuery({ queryKey: ['audit-suppliers'], queryFn: () => base44.entities.Supplier.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const p  = useQuery({ queryKey: ['audit-purchases'], queryFn: () => base44.entities.PurchaseRecord.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const wr = useQuery({ queryKey: ['audit-warehouseReceipts'], queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const sl = useQuery({ queryKey: ['audit-sampleLogs'], queryFn: () => base44.entities.SampleLog.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const pl = useQuery({ queryKey: ['audit-processingLogs'], queryFn: () => base44.entities.ProcessingLog.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const or = useQuery({ queryKey: ['audit-outputReports'], queryFn: () => base44.entities.OutputReport.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const ec = useQuery({ queryKey: ['audit-exportContracts'], queryFn: () => base44.entities.ExportContract.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const bi = useQuery({ queryKey: ['audit-buyerInspections'], queryFn: () => base44.entities.BuyerInspection.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const br = useQuery({ queryKey: ['audit-bagReceipts'], queryFn: () => base44.entities.BagReceipt.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const rbu = useQuery({ queryKey: ['audit-rejectBagUsages'], queryFn: () => base44.entities.RejectBagUsage.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const sbp = useQuery({ queryKey: ['audit-supplierBagPayments'], queryFn: () => base44.entities.SupplierBagPayment.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const sbr = useQuery({ queryKey: ['audit-supplierBagReturns'], queryFn: () => base44.entities.SupplierBagReturn.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-  const me = useQuery({ queryKey: ['audit-materialEntries'], queryFn: () => base44.entities.MaterialRegisterEntry.list('-created_date', AUDIT_LIMIT), staleTime: 0 });
-
-  const queries = [s, p, wr, sl, pl, or, ec, bi, br, rbu, sbp, sbr, me];
-  const isLoading = queries.some(q => q.isLoading);
-  const isError = queries.some(q => q.isError);
+  const audit = useQuery({ queryKey: ['phase9-data-audit-snapshot'], queryFn: () => reportService.dataAuditSnapshot(), staleTime: 0 });
+  const data = audit.data || {};
 
   return {
-    suppliers: s.data || [],
-    purchases: p.data || [],
-    warehouseReceipts: wr.data || [],
-    sampleLogs: sl.data || [],
-    processingLogs: pl.data || [],
-    outputReports: or.data || [],
-    exportContracts: ec.data || [],
-    buyerInspections: bi.data || [],
-    bagReceipts: br.data || [],
-    rejectBagUsages: rbu.data || [],
-    supplierBagPayments: sbp.data || [],
-    supplierBagReturns: sbr.data || [],
-    materialEntries: me.data || [],
-    isLoading,
-    isError,
+    suppliers: data.suppliers || [],
+    purchases: data.purchases || [],
+    warehouseReceipts: data.warehouseReceipts || [],
+    sampleLogs: data.sampleLogs || [],
+    processingLogs: data.processingLogs || [],
+    outputReports: data.outputReports || [],
+    exportContracts: data.exportContracts || [],
+    buyerInspections: data.buyerInspections || [],
+    bagReceipts: data.bagReceipts || [],
+    rejectBagUsages: data.rejectBagUsages || [],
+    supplierBagPayments: data.supplierBagPayments || [],
+    supplierBagReturns: data.supplierBagReturns || [],
+    materialEntries: data.materialEntries || [],
+    isLoading: audit.isLoading,
+    isError: audit.isError,
   };
 }
 

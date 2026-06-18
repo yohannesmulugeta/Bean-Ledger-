@@ -271,3 +271,19 @@ insert into public.material_movements (
   ('b8600000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', 'b8500000-0000-4000-8000-000000000002', 'eeeeeeee-eeee-4eee-8eee-000000000001', 'Bag 60kg', 'material_usage', 6, null, null, '2026-06-09T08:00:00Z', 'Synthetic export contract material usage', true, null),
   ('b8600000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', 'b8500000-0000-4000-8000-000000000004', null, 'Craft', 'material_purchase', 20, 100, 2000, '2026-06-11T08:00:00Z', 'Synthetic archived material entry', true, '2026-06-12T08:00:00Z')
 on conflict (id) do update set quantity = excluded.quantity, is_demo = true, archived_at = excluded.archived_at;
+
+insert into public.audit_logs (id, organization_id, profile_id, is_demo, action_type, entity_table, entity_id, record_description, reason, changes, created_at)
+values
+  ('a9000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', true, 'Created', 'purchase_records', '44444444-4444-4444-8444-000000000001', 'DEMO/WOL/001/2026', 'Synthetic Phase 9 audit seed', '{"demo": true}'::jsonb, '2026-06-02T09:00:00Z'),
+  ('a9000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', true, 'Created', 'warehouse_receipts', '88888888-8888-4888-8888-000000000001', 'DEMO-WH-001', 'Synthetic Phase 9 audit seed', '{"demo": true}'::jsonb, '2026-06-03T08:00:00Z'),
+  ('a9000000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', true, 'Archived', 'warehouse_receipts', '88888888-8888-4888-8888-000000000004', 'DEMO-WH-ARCHIVED', 'Synthetic archived demo receipt', '{"demo": true}'::jsonb, '2026-06-12T08:00:00Z'),
+  ('a9000000-0000-4000-8000-000000000004', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', true, 'Created', 'export_contracts', 'eeeeeeee-eeee-4eee-8eee-000000000001', 'DEMO-EXP-001-2026', 'Synthetic Phase 9 audit seed', '{"demo": true}'::jsonb, '2026-06-09T08:00:00Z')
+on conflict (id) do update set
+  action_type = excluded.action_type,
+  entity_table = excluded.entity_table,
+  entity_id = excluded.entity_id,
+  record_description = excluded.record_description,
+  reason = excluded.reason,
+  changes = excluded.changes,
+  is_demo = true,
+  created_at = excluded.created_at;
