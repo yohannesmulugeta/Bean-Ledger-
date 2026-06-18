@@ -1,0 +1,72 @@
+{
+  "name": "UserInvite",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Email to invite"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "supervisor",
+        "purchaser",
+        "warehouse_keeper",
+        "process_manager",
+        "final_registrar",
+        "export_manager",
+        "accountant",
+        "auditor",
+        "viewer",
+        "unassigned"
+      ],
+      "description": "Assigned role on acceptance"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional note for the invite"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "expired",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Invite status"
+    },
+    "invited_by": {
+      "type": "string",
+      "description": "Email of user who created the invite"
+    },
+    "accepted_by": {
+      "type": "string",
+      "description": "Email of user who accepted"
+    },
+    "accepted_at": {
+      "type": "string",
+      "description": "ISO date-time when accepted"
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "ISO date-time when invite expires"
+    },
+    "single_use": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether invite is single-use"
+    },
+    "require_manual_approval": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user must be manually approved after first login"
+    }
+  },
+  "required": [
+    "email",
+    "role"
+  ]
+}

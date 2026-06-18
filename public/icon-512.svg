@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="240" fill="#126433"/>
+  <circle cx="256" cy="256" r="220" fill="#0d4a22" stroke="#f06721" stroke-width="6"/>
+  <!-- Coffee bean shape -->
+  <ellipse cx="230" cy="270" rx="65" ry="90" fill="#f06721" transform="rotate(-15 230 270)"/>
+  <ellipse cx="282" cy="242" rx="50" ry="75" fill="#f06721" transform="rotate(20 282 242)"/>
+  <!-- Center line -->
+  <path d="M200 350 Q256 220 312 350" stroke="#126433" stroke-width="8" fill="none"/>
+  <!-- K letters -->
+  <text x="256" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="bold" fill="#f06721">KKGT</text>
+  <text x="256" y="465" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#f06721">ERP</text>
+</svg>

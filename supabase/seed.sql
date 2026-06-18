@@ -1,0 +1,1 @@
+-- Phase 1 keeps seed data empty. Add local-only development seeds after auth and RLS are finalized.

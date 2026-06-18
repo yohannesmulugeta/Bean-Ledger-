@@ -1,0 +1,34 @@
+{
+  "name": "RolePermission",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "supervisor",
+        "purchaser",
+        "warehouse_keeper",
+        "process_manager",
+        "final_registrar",
+        "export_manager",
+        "accountant",
+        "auditor",
+        "viewer",
+        "unassigned"
+      ],
+      "description": "Role key"
+    },
+    "allowed_paths": {
+      "type": "string",
+      "description": "JSON array of allowed route paths for sidebar filtering"
+    },
+    "permissions_data": {
+      "type": "string",
+      "description": "JSON object: { module_key: { can_view, can_create, can_edit, can_delete, can_archive, can_restore, can_export, can_import, can_approve, can_manage_payments, can_view_financials, can_manage_attachments } }"
+    }
+  },
+  "required": [
+    "role"
+  ]
+}

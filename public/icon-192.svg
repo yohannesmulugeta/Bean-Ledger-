@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <circle cx="96" cy="96" r="90" fill="#126433"/>
+  <circle cx="96" cy="96" r="82" fill="#0d4a22" stroke="#f06721" stroke-width="3"/>
+  <ellipse cx="86" cy="102" rx="26" ry="36" fill="#f06721" transform="rotate(-15 86 102)"/>
+  <ellipse cx="106" cy="90" rx="20" ry="30" fill="#f06721" transform="rotate(20 106 90)"/>
+  <path d="M74 132 Q96 82 118 132" stroke="#126433" stroke-width="3" fill="none"/>
+  <text x="96" y="48" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#f06721">KKGT</text>
+</svg>

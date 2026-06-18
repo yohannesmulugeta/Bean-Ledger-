@@ -1,0 +1,1281 @@
+{
+  "generated_at": "2026-06-18T10:11:59.267Z",
+  "mode": "local-only",
+  "entity_count": 29,
+  "entities": [
+    {
+      "order": 1,
+      "entity": "ActivityLog",
+      "schema_file": "base44/entities/ActivityLog.jsonc",
+      "expected_export_file": "ActivityLog.json",
+      "required_fields": [
+        "user_email",
+        "action_type",
+        "screen_name"
+      ],
+      "field_count": 8,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/dashboard/RecentActivity.jsx",
+        "src/components/shared/ArchivedRecordsSection.jsx",
+        "src/pages/ActivityLog.jsx",
+        "src/pages/UserActivityReport.jsx",
+        "src/pages/UsersManagement.jsx"
+      ],
+      "write_surfaces": [
+        "src/lib/activityLogger.js"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        2000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 2,
+      "entity": "Attachment",
+      "schema_file": "base44/entities/Attachment.jsonc",
+      "expected_export_file": "Attachment.json",
+      "required_fields": [
+        "entity_type",
+        "entity_id",
+        "section",
+        "file_url",
+        "file_name"
+      ],
+      "field_count": 7,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/attachments/ExportDocsPanel.jsx",
+        "src/components/attachments/PurchaseAttachmentsPanel.jsx",
+        "src/components/attachments/WarehouseAttachmentsPanel.jsx",
+        "src/pages/PurchaseRegistration.jsx",
+        "src/pages/WarehouseReceipt.jsx"
+      ],
+      "write_surfaces": [
+        "src/components/attachments/ExportDocsPanel.jsx",
+        "src/components/attachments/PurchaseAttachmentsPanel.jsx",
+        "src/components/attachments/WarehouseAttachmentsPanel.jsx"
+      ],
+      "known_list_caps": [
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 3,
+      "entity": "BagReceipt",
+      "schema_file": "base44/entities/BagReceipt.jsonc",
+      "expected_export_file": "BagReceipt.json",
+      "required_fields": [
+        "bags_received"
+      ],
+      "field_count": 13,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/bagledger/BagReceiptsSection.jsx",
+        "src/components/bagledger/SupplierBagSummary.jsx",
+        "src/lib/archiveService.js",
+        "src/pages/DataAudit.jsx",
+        "src/pages/WarehouseReceipt.jsx"
+      ],
+      "write_surfaces": [
+        "src/components/bagledger/BagReceiptsSection.jsx",
+        "src/lib/archiveService.js",
+        "src/pages/WarehouseReceipt.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 4,
+      "entity": "BuyerInspection",
+      "schema_file": "base44/entities/BuyerInspection.jsonc",
+      "expected_export_file": "BuyerInspection.json",
+      "required_fields": [
+        "inspection_date",
+        "buyer_name",
+        "coffee_type",
+        "kg_to_inspect",
+        "sample_kg_taken"
+      ],
+      "field_count": 13,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/pages/BuyerInspections.jsx",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/ExportContracts.jsx",
+        "src/pages/OutputReportPage.jsx",
+        "src/pages/ProcessingLogPage.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/BuyerInspections.jsx"
+      ],
+      "known_list_caps": [
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 5,
+      "entity": "Export",
+      "schema_file": "base44/entities/Export.jsonc",
+      "expected_export_file": "Export.json",
+      "required_fields": [
+        "contract_number",
+        "buyer_name",
+        "buyer_country",
+        "coffee_type",
+        "quantity_kg"
+      ],
+      "field_count": 13,
+      "read_surfaces": [
+        "src/pages/Exports.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/Exports.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 6,
+      "entity": "ExportContract",
+      "schema_file": "base44/entities/ExportContract.jsonc",
+      "expected_export_file": "ExportContract.json",
+      "required_fields": [
+        "contract_no",
+        "destination_country",
+        "contract_date"
+      ],
+      "field_count": 74,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/pages/BuyerInspections.jsx",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/ExportContracts.jsx",
+        "src/pages/OutputReportPage.jsx",
+        "src/pages/Reports.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/ExportContracts.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 7,
+      "entity": "MaterialEntry",
+      "schema_file": "base44/entities/MaterialEntry.jsonc",
+      "expected_export_file": "MaterialEntry.json",
+      "required_fields": [
+        "entry_date",
+        "item_name",
+        "quantity",
+        "unit_cost_etb"
+      ],
+      "field_count": 7,
+      "read_surfaces": [],
+      "write_surfaces": [],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 8,
+      "entity": "MaterialRegisterEntry",
+      "schema_file": "base44/entities/MaterialRegisterEntry.jsonc",
+      "expected_export_file": "MaterialRegisterEntry.json",
+      "required_fields": [
+        "date",
+        "quantity"
+      ],
+      "field_count": 11,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/materials/ExportMaterialsTab.jsx",
+        "src/components/materials/GeneralPurchaseTab.jsx",
+        "src/pages/DataAudit.jsx"
+      ],
+      "write_surfaces": [
+        "src/components/materials/ExportMaterialsTab.jsx",
+        "src/components/materials/GeneralPurchaseTab.jsx"
+      ],
+      "known_list_caps": [
+        1000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 9,
+      "entity": "Notification",
+      "schema_file": "base44/entities/Notification.jsonc",
+      "expected_export_file": "Notification.json",
+      "required_fields": [
+        "recipient_email",
+        "type",
+        "title",
+        "message"
+      ],
+      "field_count": 11,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/hooks/useNotifications.js",
+        "src/lib/notificationService.js",
+        "src/pages/NotificationHistory.jsx"
+      ],
+      "write_surfaces": [
+        "src/hooks/useNotifications.js",
+        "src/lib/notificationService.js",
+        "src/pages/NotificationHistory.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 10,
+      "entity": "NotificationSettings",
+      "schema_file": "base44/entities/NotificationSettings.jsonc",
+      "expected_export_file": "NotificationSettings.json",
+      "required_fields": [
+        "user_email"
+      ],
+      "field_count": 2,
+      "read_surfaces": [
+        "src/pages/NotificationSettings.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/NotificationSettings.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 11,
+      "entity": "OutputReport",
+      "schema_file": "base44/entities/OutputReport.jsonc",
+      "expected_export_file": "OutputReport.json",
+      "required_fields": [
+        "start_date",
+        "end_date"
+      ],
+      "field_count": 25,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/pages/BuyerInspections.jsx",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/ExportContracts.jsx",
+        "src/pages/OutputReportPage.jsx",
+        "src/pages/Reports.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx",
+        "src/pages/UserActivityReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/OutputReportPage.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 12,
+      "entity": "ProcessingBatch",
+      "schema_file": "base44/entities/ProcessingBatch.jsonc",
+      "expected_export_file": "ProcessingBatch.json",
+      "required_fields": [
+        "batch_number",
+        "lot_number",
+        "coffee_type",
+        "process_type",
+        "input_quantity_kg"
+      ],
+      "field_count": 11,
+      "read_surfaces": [
+        "src/pages/Processing.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/Processing.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 13,
+      "entity": "ProcessingLog",
+      "schema_file": "base44/entities/ProcessingLog.jsonc",
+      "expected_export_file": "ProcessingLog.json",
+      "required_fields": [
+        "date"
+      ],
+      "field_count": 18,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/dashboard/SupplierBalancesTable.jsx",
+        "src/lib/archiveService.js",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/OutputReportPage.jsx",
+        "src/pages/ProcessingLogPage.jsx",
+        "src/pages/PurchaseOrdersReport.jsx",
+        "src/pages/Reports.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx",
+        "src/pages/UserActivityReport.jsx",
+        "src/pages/WarehouseReceipt.jsx",
+        "src/pages/WarehouseReceiptReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/lib/archiveService.js",
+        "src/pages/BuyerInspections.jsx",
+        "src/pages/ProcessingLogPage.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        2000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 14,
+      "entity": "Purchase",
+      "schema_file": "base44/entities/Purchase.jsonc",
+      "expected_export_file": "Purchase.json",
+      "required_fields": [
+        "supplier_name",
+        "coffee_type",
+        "quantity_kg",
+        "price_per_kg",
+        "purchase_date"
+      ],
+      "field_count": 10,
+      "read_surfaces": [
+        "src/pages/Purchases.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/Purchases.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 15,
+      "entity": "PurchaseRecord",
+      "schema_file": "base44/entities/PurchaseRecord.jsonc",
+      "expected_export_file": "PurchaseRecord.json",
+      "required_fields": [
+        "supplier_name",
+        "purchase_date"
+      ],
+      "field_count": 23,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/dashboard/SupplierBalancesTable.jsx",
+        "src/components/purchases/DuplicateReport.jsx",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/ProcessingLogPage.jsx",
+        "src/pages/PurchaseOrdersReport.jsx",
+        "src/pages/PurchaseRegistration.jsx",
+        "src/pages/Reports.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx",
+        "src/pages/UserActivityReport.jsx",
+        "src/pages/WarehouseReceipt.jsx",
+        "src/pages/WarehouseReceiptReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/lib/archiveService.js",
+        "src/pages/PurchaseRegistration.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        2000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 16,
+      "entity": "RejectBagUsage",
+      "schema_file": "base44/entities/RejectBagUsage.jsonc",
+      "expected_export_file": "RejectBagUsage.json",
+      "required_fields": [
+        "date",
+        "bags_used"
+      ],
+      "field_count": 7,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/bagledger/RejectBagUsageSection.jsx",
+        "src/components/bagledger/SupplierBagSummary.jsx",
+        "src/pages/DataAudit.jsx"
+      ],
+      "write_surfaces": [
+        "src/components/bagledger/RejectBagUsageSection.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 17,
+      "entity": "RolePermission",
+      "schema_file": "base44/entities/RolePermission.jsonc",
+      "expected_export_file": "RolePermission.json",
+      "required_fields": [
+        "role"
+      ],
+      "field_count": 3,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/lib/role-hooks.js",
+        "src/pages/Permissions.jsx",
+        "src/pages/UsersManagement.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/Permissions.jsx",
+        "src/pages/UsersManagement.jsx"
+      ],
+      "known_list_caps": [
+        500
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 18,
+      "entity": "SampleLog",
+      "schema_file": "base44/entities/SampleLog.jsonc",
+      "expected_export_file": "SampleLog.json",
+      "required_fields": [
+        "sample_kg"
+      ],
+      "field_count": 20,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/dashboard/SupplierBalancesTable.jsx",
+        "src/lib/archiveService.js",
+        "src/pages/BuyerInspections.jsx",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/ExportContracts.jsx",
+        "src/pages/OutputReportPage.jsx",
+        "src/pages/ProcessingLogPage.jsx",
+        "src/pages/Reports.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx",
+        "src/pages/WarehouseReceipt.jsx",
+        "src/pages/WarehouseReceiptReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/lib/archiveService.js",
+        "src/pages/SampleLogPage.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 19,
+      "entity": "SecuritySetting",
+      "schema_file": "base44/entities/SecuritySetting.jsonc",
+      "expected_export_file": "SecuritySetting.json",
+      "required_fields": [
+        "key",
+        "value"
+      ],
+      "field_count": 5,
+      "read_surfaces": [
+        "src/lib/role-hooks.js",
+        "src/pages/UsersManagement.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/UsersManagement.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 20,
+      "entity": "Supplier",
+      "schema_file": "base44/entities/Supplier.jsonc",
+      "expected_export_file": "Supplier.json",
+      "required_fields": [
+        "supplier_name"
+      ],
+      "field_count": 10,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/bagledger/BagReceiptsSection.jsx",
+        "src/components/bagledger/RejectBagUsageSection.jsx",
+        "src/components/bagledger/SupplierBagSummary.jsx",
+        "src/pages/BuyerInspections.jsx",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/ExportContracts.jsx",
+        "src/pages/MasterData.jsx",
+        "src/pages/OutputReportPage.jsx",
+        "src/pages/ProcessingLogPage.jsx",
+        "src/pages/PurchaseOrdersReport.jsx",
+        "src/pages/PurchaseRegistration.jsx",
+        "src/pages/Reports.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx",
+        "src/pages/WarehouseReceipt.jsx",
+        "src/pages/WarehouseReceiptReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/MasterData.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 21,
+      "entity": "SupplierBagPayment",
+      "schema_file": "base44/entities/SupplierBagPayment.jsonc",
+      "expected_export_file": "SupplierBagPayment.json",
+      "required_fields": [
+        "payment_date",
+        "amount_etb"
+      ],
+      "field_count": 9,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/bagledger/SupplierBagSummary.jsx",
+        "src/pages/DataAudit.jsx"
+      ],
+      "write_surfaces": [
+        "src/components/bagledger/SupplierDetailPanel.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 22,
+      "entity": "SupplierBagReturn",
+      "schema_file": "base44/entities/SupplierBagReturn.jsonc",
+      "expected_export_file": "SupplierBagReturn.json",
+      "required_fields": [
+        "return_date",
+        "bags_returned"
+      ],
+      "field_count": 5,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/bagledger/SupplierBagSummary.jsx",
+        "src/pages/DataAudit.jsx"
+      ],
+      "write_surfaces": [
+        "src/components/bagledger/SupplierDetailPanel.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 23,
+      "entity": "SupplierBagSettlement",
+      "schema_file": "base44/entities/SupplierBagSettlement.jsonc",
+      "expected_export_file": "SupplierBagSettlement.json",
+      "required_fields": [
+        "supplier_name"
+      ],
+      "field_count": 11,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx"
+      ],
+      "write_surfaces": [],
+      "known_list_caps": [
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 24,
+      "entity": "User",
+      "schema_file": "base44/entities/User.jsonc",
+      "expected_export_file": "User.json",
+      "required_fields": [
+        "invited_by",
+        "approved_by",
+        "approved_at",
+        "rejected_by",
+        "rejected_at",
+        "rejection_reason",
+        "last_sign_in_at",
+        "internal_note"
+      ],
+      "field_count": 11,
+      "read_surfaces": [
+        "src/hooks/useNotifications.js",
+        "src/lib/notificationService.js",
+        "src/pages/UserActivityReport.jsx",
+        "src/pages/UsersManagement.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/UsersManagement.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 25,
+      "entity": "UserActivityLog",
+      "schema_file": "base44/entities/UserActivityLog.jsonc",
+      "expected_export_file": "UserActivityLog.json",
+      "required_fields": [
+        "user_email",
+        "action"
+      ],
+      "field_count": 11,
+      "read_surfaces": [
+        "src/pages/UsersManagement.jsx"
+      ],
+      "write_surfaces": [],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 26,
+      "entity": "UserInvite",
+      "schema_file": "base44/entities/UserInvite.jsonc",
+      "expected_export_file": "UserInvite.json",
+      "required_fields": [
+        "email",
+        "role"
+      ],
+      "field_count": 10,
+      "read_surfaces": [
+        "src/pages/UsersManagement.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/UsersManagement.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 27,
+      "entity": "WarehouseInventory",
+      "schema_file": "base44/entities/WarehouseInventory.jsonc",
+      "expected_export_file": "WarehouseInventory.json",
+      "required_fields": [
+        "lot_number",
+        "coffee_type",
+        "quantity_kg",
+        "warehouse_location"
+      ],
+      "field_count": 10,
+      "read_surfaces": [
+        "src/pages/WarehousePage.jsx"
+      ],
+      "write_surfaces": [
+        "src/pages/WarehousePage.jsx"
+      ],
+      "known_list_caps": [],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 28,
+      "entity": "WarehouseReceipt",
+      "schema_file": "base44/entities/WarehouseReceipt.jsonc",
+      "expected_export_file": "WarehouseReceipt.json",
+      "required_fields": [
+        "coffee_code",
+        "supplier_name",
+        "received_date"
+      ],
+      "field_count": 14,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/dashboard/SupplierBalancesTable.jsx",
+        "src/lib/archiveService.js",
+        "src/pages/Dashboard.jsx",
+        "src/pages/DataAudit.jsx",
+        "src/pages/ProcessingLogPage.jsx",
+        "src/pages/PurchaseOrdersReport.jsx",
+        "src/pages/PurchaseRegistration.jsx",
+        "src/pages/Reports.jsx",
+        "src/pages/SampleLogPage.jsx",
+        "src/pages/StockReport.jsx",
+        "src/pages/UserActivityReport.jsx",
+        "src/pages/WarehouseReceipt.jsx",
+        "src/pages/WarehouseReceiptReport.jsx"
+      ],
+      "write_surfaces": [
+        "src/lib/archiveService.js",
+        "src/pages/WarehouseReceipt.jsx"
+      ],
+      "known_list_caps": [
+        500,
+        1000,
+        2000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    },
+    {
+      "order": 29,
+      "entity": "WarehouseReceiptHistory",
+      "schema_file": "base44/entities/WarehouseReceiptHistory.jsonc",
+      "expected_export_file": "WarehouseReceiptHistory.json",
+      "required_fields": [
+        "receipt_id",
+        "action_type",
+        "user_email",
+        "action_at"
+      ],
+      "field_count": 12,
+      "read_surfaces": [
+        "src/components/admin/DownloadBackupButton.jsx",
+        "src/components/warehouse/ReceiptInlineHistory.jsx",
+        "src/components/warehouse/WarehouseHistoryTab.jsx"
+      ],
+      "write_surfaces": [
+        "src/lib/warehouseHistoryService.js"
+      ],
+      "known_list_caps": [
+        1000,
+        5000
+      ],
+      "preserve_source_id": "Store each Base44 id as source_id/base44_id in id maps and future Supabase rows."
+    }
+  ],
+  "list_limit_risks": [
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "Supplier",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "SampleLog",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "ProcessingLog",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "OutputReport",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "ExportContract",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "BuyerInspection",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "BagReceipt",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "RejectBagUsage",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "SupplierBagReturn",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "SupplierBagPayment",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "SupplierBagSettlement",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "MaterialRegisterEntry",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "ActivityLog",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "WarehouseReceiptHistory",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "Notification",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "RolePermission",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/admin/DownloadBackupButton.jsx",
+      "entity": "Attachment",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/components/bagledger/BagReceiptsSection.jsx",
+      "entity": "Supplier",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/BagReceiptsSection.jsx",
+      "entity": "BagReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/RejectBagUsageSection.jsx",
+      "entity": "Supplier",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/RejectBagUsageSection.jsx",
+      "entity": "RejectBagUsage",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/SupplierBagSummary.jsx",
+      "entity": "BagReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/SupplierBagSummary.jsx",
+      "entity": "RejectBagUsage",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/SupplierBagSummary.jsx",
+      "entity": "SupplierBagPayment",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/SupplierBagSummary.jsx",
+      "entity": "SupplierBagReturn",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/bagledger/SupplierBagSummary.jsx",
+      "entity": "Supplier",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/dashboard/SupplierBalancesTable.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/dashboard/SupplierBalancesTable.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/materials/ExportMaterialsTab.jsx",
+      "entity": "MaterialRegisterEntry",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/components/materials/GeneralPurchaseTab.jsx",
+      "entity": "MaterialRegisterEntry",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/components/purchases/DuplicateReport.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/components/shared/ArchivedRecordsSection.jsx",
+      "entity": "ActivityLog",
+      "op": "filter",
+      "cap": 500
+    },
+    {
+      "file": "src/components/warehouse/WarehouseHistoryTab.jsx",
+      "entity": "WarehouseReceiptHistory",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/ActivityLog.jsx",
+      "entity": "ActivityLog",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/BuyerInspections.jsx",
+      "entity": "BuyerInspection",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/BuyerInspections.jsx",
+      "entity": "ExportContract",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/BuyerInspections.jsx",
+      "entity": "OutputReport",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/Dashboard.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/Dashboard.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/Dashboard.jsx",
+      "entity": "ExportContract",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/ExportContracts.jsx",
+      "entity": "ExportContract",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/ExportContracts.jsx",
+      "entity": "OutputReport",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/NotificationHistory.jsx",
+      "entity": "Notification",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/NotificationHistory.jsx",
+      "entity": "Notification",
+      "op": "filter",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/OutputReportPage.jsx",
+      "entity": "OutputReport",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/OutputReportPage.jsx",
+      "entity": "ProcessingLog",
+      "op": "list",
+      "cap": 2000
+    },
+    {
+      "file": "src/pages/ProcessingLogPage.jsx",
+      "entity": "ProcessingLog",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/ProcessingLogPage.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/ProcessingLogPage.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/PurchaseOrdersReport.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 2000
+    },
+    {
+      "file": "src/pages/PurchaseOrdersReport.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 2000
+    },
+    {
+      "file": "src/pages/PurchaseOrdersReport.jsx",
+      "entity": "ProcessingLog",
+      "op": "list",
+      "cap": 2000
+    },
+    {
+      "file": "src/pages/PurchaseRegistration.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/PurchaseRegistration.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/Reports.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/Reports.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/Reports.jsx",
+      "entity": "SampleLog",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/Reports.jsx",
+      "entity": "ProcessingLog",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/Reports.jsx",
+      "entity": "OutputReport",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/Reports.jsx",
+      "entity": "ExportContract",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/SampleLogPage.jsx",
+      "entity": "SampleLog",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/SampleLogPage.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/SampleLogPage.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/StockReport.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/StockReport.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/StockReport.jsx",
+      "entity": "ProcessingLog",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/StockReport.jsx",
+      "entity": "OutputReport",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/UserActivityReport.jsx",
+      "entity": "ActivityLog",
+      "op": "list",
+      "cap": 2000
+    },
+    {
+      "file": "src/pages/UserActivityReport.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/UserActivityReport.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/UserActivityReport.jsx",
+      "entity": "ProcessingLog",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/UserActivityReport.jsx",
+      "entity": "OutputReport",
+      "op": "list",
+      "cap": 1000
+    },
+    {
+      "file": "src/pages/WarehouseReceipt.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "list",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/WarehouseReceipt.jsx",
+      "entity": "PurchaseRecord",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/WarehouseReceipt.jsx",
+      "entity": "Supplier",
+      "op": "list",
+      "cap": 500
+    },
+    {
+      "file": "src/pages/WarehouseReceiptReport.jsx",
+      "entity": "WarehouseReceipt",
+      "op": "filter",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/WarehouseReceiptReport.jsx",
+      "entity": "PurchaseRecord",
+      "op": "filter",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/WarehouseReceiptReport.jsx",
+      "entity": "SampleLog",
+      "op": "filter",
+      "cap": 5000
+    },
+    {
+      "file": "src/pages/WarehouseReceiptReport.jsx",
+      "entity": "ProcessingLog",
+      "op": "filter",
+      "cap": 5000
+    }
+  ],
+  "output_contract": {
+    "manual_drop_dir": "exports/base44/manual-drop",
+    "generated_runs_dir": "exports/base44/runs",
+    "normalized_entity_file": "entities/<Entity>.json",
+    "id_map_file": "id-map.json",
+    "attachment_index_file": "attachment-index.json",
+    "reconciliation_json_file": "reconciliation-report.json",
+    "reconciliation_markdown_file": "reconciliation-report.md"
+  }
+}

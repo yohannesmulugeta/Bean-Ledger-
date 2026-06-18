@@ -1,0 +1,54 @@
+{
+  "name": "UserActivityLog",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user who performed the action"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Full name at time of action"
+    },
+    "user_role": {
+      "type": "string",
+      "description": "Role at time of action"
+    },
+    "action": {
+      "type": "string",
+      "description": "Action performed e.g. Created, Edited, Archived, Login, Role Changed"
+    },
+    "module_key": {
+      "type": "string",
+      "description": "Module key e.g. purchase_registration, export_contracts"
+    },
+    "module_label": {
+      "type": "string",
+      "description": "Human-readable module label"
+    },
+    "record_id": {
+      "type": "string",
+      "description": "ID of the affected record"
+    },
+    "record_label": {
+      "type": "string",
+      "description": "Human-readable record label"
+    },
+    "details": {
+      "type": "string",
+      "description": "Summary/details of the action"
+    },
+    "old_values": {
+      "type": "string",
+      "description": "JSON string of old values"
+    },
+    "new_values": {
+      "type": "string",
+      "description": "JSON string of new values"
+    }
+  },
+  "required": [
+    "user_email",
+    "action"
+  ]
+}

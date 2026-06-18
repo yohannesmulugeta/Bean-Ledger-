@@ -1,0 +1,30 @@
+{
+  "name": "SecuritySetting",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Setting key e.g. require_approval, allow_supervisor_manage_users"
+    },
+    "value": {
+      "type": "string",
+      "description": "Setting value as string"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description"
+    },
+    "updated_by": {
+      "type": "string",
+      "description": "Email of user who last updated"
+    },
+    "updated_at": {
+      "type": "string",
+      "description": "ISO date-time of last update"
+    }
+  },
+  "required": [
+    "key",
+    "value"
+  ]
+}

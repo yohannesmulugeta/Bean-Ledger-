@@ -1,0 +1,83 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "supervisor",
+        "purchaser",
+        "warehouse_keeper",
+        "process_manager",
+        "final_registrar",
+        "export_manager",
+        "accountant",
+        "auditor",
+        "viewer",
+        "unassigned"
+      ],
+      "default": "unassigned",
+      "description": "User role determining access level"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this user can access the ERP"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending_approval",
+        "invited",
+        "unassigned"
+      ],
+      "default": "unassigned",
+      "description": "User status"
+    },
+    "invited_by": {
+      "type": "string",
+      "description": "Email of the user who invited this user"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Email of the user who approved this user"
+    },
+    "approved_at": {
+      "type": "string",
+      "description": "ISO date-time when user was approved"
+    },
+    "rejected_by": {
+      "type": "string",
+      "description": "Email of user who rejected"
+    },
+    "rejected_at": {
+      "type": "string",
+      "description": "ISO date-time when rejected"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Reason for rejection"
+    },
+    "last_sign_in_at": {
+      "type": "string",
+      "description": "ISO date-time of last sign-in"
+    },
+    "internal_note": {
+      "type": "string",
+      "description": "Internal admin note about this user"
+    }
+  },
+  "required": [
+    "invited_by",
+    "approved_by",
+    "approved_at",
+    "rejected_by",
+    "rejected_at",
+    "rejection_reason",
+    "last_sign_in_at",
+    "internal_note"
+  ]
+}
