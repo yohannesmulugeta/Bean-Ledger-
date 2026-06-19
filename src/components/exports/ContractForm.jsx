@@ -31,13 +31,35 @@ const DEFAULT_COST_NAMES = [
   'Other Costs ETB',
 ];
 
+const EMPTY_CONTRACT_FORM = {
+  contract_no: '',
+  contract_date: '',
+  certificate_no: '',
+  contract_pi_number: '',
+  coffee_type: '',
+  coffee_grade: '',
+  destination_country: '',
+  buyer_name: '',
+  payment_terms: '',
+  custom_payment_terms: '',
+  expected_payment_date: '',
+  export_kg: '',
+  export_sample_kg: '',
+  price_per_lb_usd: '',
+  price_per_kg_usd: '',
+  contract_rate_etb: '',
+  reject_sales_etb: '',
+  remark: '',
+  status: 'Pending',
+};
+
 function generateContractNo(count) {
   const year = new Date().getFullYear();
   return `BeanLedger/EXP/${String(count + 1).padStart(3, '0')}/${year}`;
 }
 
 // ─── Read-only display field ─────────────────────────────────────────────────
-function RO({ label, value, green, red, large }) {
+function RO({ label, value, green = false, red = false, large = false }) {
   return (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
@@ -160,7 +182,7 @@ function validateStep1(form, pricingMethod, pricePerLb, pricePerKg, exportKg, av
 // ─── Main ContractForm ────────────────────────────────────────────────────────
 export default function ContractForm({ open, onOpenChange, initialData, contractCount, availableStock, availableStockRecleaned = {}, masterCoffeeTypes, onSubmit, isSubmitting }) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(EMPTY_CONTRACT_FORM);
   const [pricingMethod, setPricingMethod] = useState('per_lb');
   const [stockPool, setStockPool] = useState('Fresh');
   const [costRows, setCostRows] = useState([]);
@@ -179,7 +201,7 @@ export default function ContractForm({ open, onOpenChange, initialData, contract
     if (!open) return;
     setStep(0);
     if (initialData) {
-      setForm({ ...initialData });
+      setForm({ ...EMPTY_CONTRACT_FORM, ...initialData });
       setOriginalDestination(initialData.destination_country || '');
       setStockPool(initialData.stock_pool || 'Fresh');
       setPricingMethod(initialData.pricing_method || (initialData.price_per_lb_usd ? 'per_lb' : 'per_kg'));
@@ -191,6 +213,7 @@ export default function ContractForm({ open, onOpenChange, initialData, contract
       try { const mats = JSON.parse(initialData.material_rows || '[]'); setMaterialRows(mats.length ? mats : []); } catch { setMaterialRows([]); }
     } else {
       setForm({
+        ...EMPTY_CONTRACT_FORM,
         contract_no: generateContractNo(contractCount),
         contract_date: todayStr(),
         certificate_no: '', contract_pi_number: '',

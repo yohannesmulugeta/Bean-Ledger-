@@ -25,7 +25,7 @@ const SEV_STYLE = {
 
 function useAuditData() {
   const audit = useQuery({ queryKey: REPORT_QUERY_KEYS.dataAuditSnapshot, queryFn: () => reportService.dataAuditSnapshot(), staleTime: 0 });
-  const data = audit.data || {};
+  const data = /** @type {any} */ (audit.data || {});
 
   return {
     suppliers: data.suppliers || [],
@@ -169,7 +169,7 @@ function DataAuditContent() {
     setError(null);
     try {
       await new Promise(r => setTimeout(r, 300));
-      const result = runDataAudit(auditData);
+      const result = /** @type {any} */ (runDataAudit(auditData));
       setIssues(result);
       setAuditRun(true);
       setExpanded({});

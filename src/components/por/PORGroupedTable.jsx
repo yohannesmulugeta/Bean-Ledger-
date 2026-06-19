@@ -160,7 +160,8 @@ function GroupSection({ group, rows, onRowClick }) {
   );
 }
 
-export default function PORGroupedTable({ purchases, isLoading, search, onSearchChange, filterCount, onFilterOpen, onRowClick }) {
+export default function PORGroupedTable({ purchases, isLoading, search, onSearchChange, filterCount, onFilterOpen, onRowClick, processingLogs = [] }) {
+  void processingLogs;
   const groups = useMemo(() => GROUPS.map(g => ({
     ...g,
     rows: purchases.filter(p => p._status === g.status),

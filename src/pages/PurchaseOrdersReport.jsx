@@ -49,7 +49,7 @@ export default function PurchaseOrdersReport() {
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [search, setSearch] = useState('');
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
-  const [advFilters, setAdvFilters] = useState({});
+  const [advFilters, setAdvFilters] = useState(/** @type {any} */ ({}));
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
@@ -155,7 +155,7 @@ export default function PurchaseOrdersReport() {
     return c;
   }, [advFilters]);
 
-  const minutesAgo = Math.floor((new Date() - lastUpdated) / 60000);
+  const minutesAgo = Math.floor((Date.now() - lastUpdated.getTime()) / 60000);
   const lastUpdatedLabel = minutesAgo === 0 ? 'just now' : `${minutesAgo} minute${minutesAgo > 1 ? 's' : ''} ago`;
 
   if (!canView) return <Navigate to="/" replace />;
