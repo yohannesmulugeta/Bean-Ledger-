@@ -305,3 +305,34 @@ on conflict (id) do update set
   storage_path = excluded.storage_path,
   is_demo = true,
   archived_at = excluded.archived_at;
+
+insert into public.notifications (
+  id, organization_id, base44_id, is_demo, recipient_profile_id, recipient_email,
+  recipient_role, title, message, type, severity, link_path, read_at, created_at, archived_at
+) values
+  ('d1000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', null, true, '22222222-2222-4222-8222-222222222222', 'demo-admin@kkgt.local', 'admin', 'Demo purchase registered', 'Synthetic demo purchase DEMO/WOL/001/2026 is ready for warehouse receipt review.', 'new_purchase', 'info', '/purchase-registration', null, '2026-06-12T09:00:00Z', null),
+  ('d1000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', null, true, '22222222-2222-4222-8222-222222222222', 'demo-admin@kkgt.local', 'admin', 'Demo warehouse receipt confirmed', 'Synthetic warehouse receipt DEMO-WH-001 was confirmed in local demo data.', 'warehouse_confirmed', 'info', '/warehouse-receipt', '2026-06-12T10:00:00Z', '2026-06-12T09:30:00Z', null),
+  ('d1000000-0000-4000-8000-000000000003', '11111111-1111-4111-8111-111111111111', null, true, '22222222-2222-4222-8222-222222222222', 'demo-admin@kkgt.local', 'admin', 'Demo export payment pending', 'Synthetic export contract DEMO-EXP-001-2026 has a remaining demo balance.', 'export_contract', 'warning', '/export-contracts', null, '2026-06-12T10:00:00Z', null),
+  ('d1000000-0000-4000-8000-000000000004', '11111111-1111-4111-8111-111111111111', null, true, '22222222-2222-4222-8222-222222222222', 'demo-admin@kkgt.local', 'admin', 'Demo archived notification', 'Synthetic archived notification used to verify archive filtering.', 'demo_archive', 'info', null, null, '2026-06-11T10:00:00Z', '2026-06-13T08:00:00Z')
+on conflict (id) do update set
+  title = excluded.title,
+  message = excluded.message,
+  type = excluded.type,
+  severity = excluded.severity,
+  read_at = excluded.read_at,
+  is_demo = true,
+  archived_at = excluded.archived_at;
+
+insert into public.notification_preferences (
+  id, organization_id, profile_id, user_email, disabled_types, is_demo
+) values (
+  'd2000000-0000-4000-8000-000000000001',
+  '11111111-1111-4111-8111-111111111111',
+  '22222222-2222-4222-8222-222222222222',
+  'demo-admin@kkgt.local',
+  array[]::text[],
+  true
+)
+on conflict (id) do update set
+  disabled_types = excluded.disabled_types,
+  is_demo = true;

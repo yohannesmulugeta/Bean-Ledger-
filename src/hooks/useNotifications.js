@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useUser } from '@/lib/useUser';
+import { notificationService } from '@/services/notificationService';
 
 export function useNotifications() {
   const user = useUser();
@@ -8,7 +8,7 @@ export function useNotifications() {
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications', user?.email],
-    queryFn: () => user ? base44.entities.Notification.filter({ recipient_email: user.email }, '-created_date', 200) : [],
+    queryFn: () => user ? notificationService.list({ recipientEmail: user.email }) : [],
     enabled: !!user,
     staleTime: 30000,
     refetchInterval: 30000,
@@ -17,7 +17,7 @@ export function useNotifications() {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const markReadMutation = useMutation({
-    mutationFn: (id) => base44.entities.Notification.update(id, { is_read: true }),
+    mutationFn: (id) => notificationService.markRead(id),
     onMutate: async (id) => {
       // Optimistic update
       await queryClient.cancelQueries({ queryKey: ['notifications', user?.email] });
@@ -29,12 +29,7 @@ export function useNotifications() {
   });
 
   const markAllReadMutation = useMutation({
-    mutationFn: async () => {
-      const unread = notifications.filter(n => !n.is_read);
-      for (const n of unread) {
-        await base44.entities.Notification.update(n.id, { is_read: true });
-      }
-    },
+    mutationFn: () => notificationService.markAllRead({ recipientEmail: user?.email }),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['notifications', user?.email] });
       queryClient.setQueryData(['notifications', user?.email], old =>
@@ -56,6 +51,6 @@ export function useNotifications() {
 
 // Helper: get all users by role
 export async function getUsersByRole(roles) {
-  const users = await base44.entities.User.list();
+  const users = [{ id: 'demo-admin-local', email: 'demo-admin@kkgt.local', role: 'admin', full_name: 'Demo Admin' }];
   return users.filter(u => roles.includes(u.role));
 }

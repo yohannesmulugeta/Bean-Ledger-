@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createClient } from '@supabase/supabase-js';
 
 const viteEnv = import.meta.env || {};
@@ -5,6 +6,20 @@ const supabaseUrl = viteEnv.VITE_SUPABASE_URL;
 const supabaseAnonKey = viteEnv.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+export const frontendEnvValidation = {
+  hasSupabaseUrl: Boolean(supabaseUrl),
+  hasSupabaseAnonKey: Boolean(supabaseAnonKey),
+  hasServiceRoleLikeKey: typeof supabaseAnonKey === 'string' && /service[_-]?role/i.test(supabaseAnonKey),
+  messages: [],
+};
+
+if (!frontendEnvValidation.hasSupabaseUrl || !frontendEnvValidation.hasSupabaseAnonKey) {
+  frontendEnvValidation.messages.push('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. The demo will use local synthetic fallback data.');
+}
+
+if (frontendEnvValidation.hasServiceRoleLikeKey) {
+  frontendEnvValidation.messages.push('Do not place Supabase service-role credentials in frontend VITE_ variables.');
+}
 
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {

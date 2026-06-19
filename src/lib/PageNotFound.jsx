@@ -1,24 +1,12 @@
 import { useLocation } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 
 export default function PageNotFound({}) {
     const location = useLocation();
     const pageName = location.pathname.substring(1);
-
-    const { data: authData, isFetched } = useQuery({
-        queryKey: ['user'],
-        queryFn: async () => {
-            try {
-                const user = await base44.auth.me();
-                return { user, isAuthenticated: true };
-            } catch (error) {
-                return { user: null, isAuthenticated: false };
-            }
-        }
-    });
+    const { user, isAuthenticated } = useAuth();
     
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-background">
@@ -38,7 +26,7 @@ export default function PageNotFound({}) {
                         </p>
                     </div>
                     
-                    {isFetched && authData.isAuthenticated && authData.user?.role === 'admin' && (
+                    {isAuthenticated && user?.role === 'admin' && (
                         <div className="mt-8 p-4 bg-muted rounded-xl border border-border">
                             <div className="flex items-start space-x-3">
                                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center mt-0.5">

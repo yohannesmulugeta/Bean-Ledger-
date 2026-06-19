@@ -1,6 +1,6 @@
+// @ts-nocheck
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useRole } from '@/lib/role-hooks';
 import { Navigate } from 'react-router-dom';
 import PageHeader from '@/components/shared/PageHeader';
@@ -13,6 +13,11 @@ import ActivityUsersTable from '@/components/userreport/ActivityUsersTable';
 import UserDetailPanel from '@/components/userreport/UserDetailPanel';
 import { exportUserReportPDF, exportUserReportExcel } from '@/lib/userReportExport';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { auditService } from '@/services/auditService';
+import { purchaseService } from '@/services/purchaseService';
+import { warehouseService } from '@/services/warehouseService';
+import { processingService } from '@/services/processingService';
+import { outputService } from '@/services/outputService';
 
 function getThisWeekRange() {
   const now = new Date();
@@ -31,27 +36,27 @@ export default function UserActivityReport() {
   // Fetch all data sources
   const { data: activityLogs = [], isLoading: loadingActivity } = useQuery({
     queryKey: ['activity-log'],
-    queryFn: () => base44.entities.ActivityLog.list('-created_date', 2000),
+    queryFn: () => auditService.list(),
   });
   const { data: purchases = [], isLoading: loadingPurchases } = useQuery({
     queryKey: ['purchase-records'],
-    queryFn: () => base44.entities.PurchaseRecord.list('-created_date', 1000),
+    queryFn: () => purchaseService.list(),
   });
   const { data: receipts = [], isLoading: loadingReceipts } = useQuery({
     queryKey: ['warehouse-receipts'],
-    queryFn: () => base44.entities.WarehouseReceipt.list('-created_date', 1000),
+    queryFn: () => warehouseService.listReceipts(),
   });
   const { data: processingLogs = [], isLoading: loadingProcessing } = useQuery({
     queryKey: ['processing-logs'],
-    queryFn: () => base44.entities.ProcessingLog.list('-created_date', 1000),
+    queryFn: () => processingService.list(),
   });
   const { data: outputReports = [], isLoading: loadingOutput } = useQuery({
     queryKey: ['output-reports'],
-    queryFn: () => base44.entities.OutputReport.list('-created_date', 1000),
+    queryFn: () => outputService.list(),
   });
   const { data: users = [], isLoading: loadingUsers } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => Promise.resolve([{ id: 'demo-admin-local', email: 'demo-admin@kkgt.local', full_name: 'Demo Admin', role: 'admin' }]),
   });
 
   const isLoading = loadingActivity || loadingPurchases || loadingReceipts || loadingProcessing || loadingOutput || loadingUsers;

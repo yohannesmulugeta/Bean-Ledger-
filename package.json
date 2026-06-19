@@ -20,6 +20,7 @@
     "test:phase8": "node scripts/tests/bag-material-workflow.test.mjs",
     "test:phase9": "node scripts/tests/dashboard-reporting-workflow.test.mjs",
     "test:phase10": "node scripts/tests/attachment-workflow.test.mjs",
+    "test:phase11": "node scripts/tests/demo-hardening.test.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },

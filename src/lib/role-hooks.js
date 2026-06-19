@@ -3,8 +3,6 @@
  * Uses plain React state; no TanStack Query dependency.
  */
 import { useAuth } from '@/lib/AuthContext';
-import { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
 
 // ── Role constants ──────────────────────────────────────────────────────────
 export const ROLES = {
@@ -183,39 +181,9 @@ export function useRole() {
   const isSupervisor = role === ROLES.SUPERVISOR;
   const isAdminOrSupervisor = isAdmin || isSupervisor;
 
-  const [dbRecords, setDbRecords] = useState([]);
-  const [roleReady, setRoleReady] = useState(false);
-
-  useEffect(() => {
-    if (!role || isAdmin) {
-      setDbRecords([]);
-      setRoleReady(true);
-      return;
-    }
-    let cancelled = false;
-    base44.entities.RolePermission.list()
-      .then(records => {
-        if (!cancelled) { setDbRecords(records); setRoleReady(true); }
-      })
-      .catch(() => {
-        if (!cancelled) setRoleReady(true);
-      });
-    return () => { cancelled = true; };
-  }, [role, isAdmin]);
-
   const allowedRoutes = (() => {
     if (!role) return [];
     if (isAdmin) return [...ADMIN_ROUTES, '/users-management'];
-
-    const rec = dbRecords.find(d => d.role === role);
-    if (rec && rec.allowed_paths) {
-      try {
-        const parsed = JSON.parse(rec.allowed_paths);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return [...new Set([...parsed, ...SYSTEM_PATHS])];
-        }
-      } catch { /* fall through */ }
-    }
     const defaults = DEFAULT_ROLE_ROUTES[role] || [];
     return [...new Set([...defaults, ...SYSTEM_PATHS])];
   })();
@@ -233,7 +201,7 @@ export function useRole() {
     canAccess,
     allowedRoutes,
     user,
-    ready: roleReady,
+    ready: true,
   };
 }
 
@@ -245,49 +213,17 @@ export function usePermission() {
   const isAdmin = role === ROLES.ADMIN;
   const isSupervisor = role === ROLES.SUPERVISOR;
 
-  const [dbRecords, setDbRecords] = useState([]);
-  const [securitySettings, setSecuritySettings] = useState([]);
-
-  useEffect(() => {
-    if (!role || isAdmin) {
-      setDbRecords([]);
-      return;
-    }
-    let cancelled = false;
-    base44.entities.RolePermission.list()
-      .then(records => { if (!cancelled) setDbRecords(records); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [role, isAdmin]);
-
-  useEffect(() => {
-    if (!isSupervisor) {
-      setSecuritySettings([]);
-      return;
-    }
-    let cancelled = false;
-    base44.entities.SecuritySetting.list()
-      .then(settings => { if (!cancelled) setSecuritySettings(settings); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [isSupervisor]);
-
   const getSecuritySetting = (key, def = 'false') => {
-    const s = securitySettings.find(ss => ss.key === key);
-    return s ? s.value : def;
+    const demoSettings = {
+      allow_supervisor_manage_users: 'false',
+      allow_supervisor_manage_permissions: 'false',
+    };
+    return demoSettings[key] || def;
   };
 
   const getModulePerms = (moduleKey) => {
     if (!moduleKey) return {};
     if (isAdmin) return { ...FULL_PERMS };
-
-    const rec = dbRecords.find(d => d.role === role);
-    if (rec && rec.permissions_data) {
-      try {
-        const data = JSON.parse(rec.permissions_data);
-        return data[moduleKey] || DEFAULT_ROLE_PERMISSIONS[role]?.[moduleKey] || {};
-      } catch { /* fall through */ }
-    }
     return DEFAULT_ROLE_PERMISSIONS[role]?.[moduleKey] || {};
   };
 

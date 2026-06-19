@@ -1,79 +1,79 @@
+// @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
-import { useUser } from '@/lib/useUser';
+import { Save } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
-import { useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { notificationService } from '@/services/notificationService';
+import { useUser } from '@/lib/useUser';
 
 const ALL_TYPES = [
-  { key: 'new_purchase', label: '📦 New Purchase Registered', roles: ['warehouse_keeper'], critical: false },
-  { key: 'new_purchase_supervisor', label: '📦 New Purchase (Supervisor)', roles: ['admin', 'supervisor'], critical: false },
-  { key: 'payment_recorded', label: '💰 Payment Recorded', roles: ['admin', 'supervisor'], critical: false },
-  { key: 'fully_paid', label: '✅ Supplier Fully Paid', roles: ['admin', 'supervisor'], critical: false },
-  { key: 'weekly_payment_summary', label: '📋 Weekly Payment Summary', roles: ['admin', 'supervisor'], critical: false },
-  { key: 'warehouse_confirmed', label: '✅ Warehouse Receipt Confirmed', roles: ['purchaser', 'admin'], critical: false },
-  { key: 'warehouse_receipt_supervisor', label: '🏭 Receipt Confirmed (Supervisor)', roles: ['admin', 'supervisor'], critical: false },
-  { key: 'large_shrinkage', label: '⚠️ Large Shrinkage Alert', roles: ['admin', 'supervisor'], critical: true },
-  { key: 'low_stock', label: '⚠️ Low Stock Warning', roles: ['warehouse_keeper', 'admin'], critical: false },
-  { key: 'stock_empty', label: '🔴 Stock Empty Alert', roles: ['warehouse_keeper', 'admin', 'supervisor'], critical: true },
+  { key: 'new_purchase', label: 'New purchase registered', critical: false },
+  { key: 'warehouse_confirmed', label: 'Warehouse receipt confirmed', critical: false },
+  { key: 'export_contract', label: 'Export contract updates', critical: false },
+  { key: 'weekly_payment_summary', label: 'Weekly payment summary', critical: false },
+  { key: 'low_stock', label: 'Low stock warning', critical: false },
+  { key: 'stock_empty', label: 'Stock empty alert', critical: true },
 ];
 
 export default function NotificationSettings() {
   const user = useUser();
   const [disabled, setDisabled] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [settingsId, setSettingsId] = useState(null);
-  const queryClient = useQueryClient();
-  const isSupervisor = user?.role === 'admin' || user?.role === 'supervisor';
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    base44.entities.NotificationSettings.filter({ user_email: user.email }).then(rows => {
-      if (rows.length > 0) {
-        setSettingsId(rows[0].id);
-        try { setDisabled(JSON.parse(rows[0].disabled_types || '[]')); } catch {}
-      }
+    let cancelled = false;
+    notificationService.getPreferences(user?.email).then((preferences) => {
+      if (!cancelled) setDisabled(preferences?.disabled_types || []);
     });
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [user?.email]);
 
   const toggle = (key, isCritical) => {
-    if (isCritical && isSupervisor) return; // supervisors can't turn off critical
-    setDisabled(prev =>
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    if (isCritical) return;
+    setSaved(false);
+    setDisabled((current) =>
+      current.includes(key) ? current.filter((item) => item !== key) : [...current, key]
     );
   };
 
   const save = async () => {
-    if (!user) return;
     setSaving(true);
-    const payload = { user_email: user.email, disabled_types: JSON.stringify(disabled) };
-    if (settingsId) await base44.entities.NotificationSettings.update(settingsId, payload);
-    else { const r = await base44.entities.NotificationSettings.create(payload); setSettingsId(r.id); }
+    await notificationService.savePreferences(user?.email || 'demo-admin@kkgt.local', disabled);
     setSaving(false);
-    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    setSaved(true);
   };
-
-  const relevantTypes = ALL_TYPES.filter(t => !t.roles.length || t.roles.some(r => r === user?.role) || isSupervisor);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <PageHeader title="Notification Settings" description="Control which notifications you receive" />
+      <PageHeader title="Demo Notification Settings" description="Local demo preferences only" />
 
-      <div className="bg-card border border-border rounded-xl divide-y divide-border">
-        {relevantTypes.map(t => {
-          const isDisabled = disabled.includes(t.key);
-          const locked = t.critical && isSupervisor;
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        These settings affect only the demo notification center. Telegram, email, Supabase Auth users, and production notification delivery are not connected.
+      </div>
+
+      <div className="rounded-xl border border-border bg-card divide-y divide-border">
+        <div className="px-5 py-4">
+          <p className="text-sm font-semibold">Demo environment</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Signed in as {user?.full_name || 'Demo Admin'} using local demo credentials. Credentials cannot be changed from this screen.
+          </p>
+        </div>
+        {ALL_TYPES.map((type) => {
+          const isDisabled = disabled.includes(type.key);
           return (
-            <div key={t.key} className="flex items-center justify-between px-5 py-4">
+            <div key={type.key} className="flex items-center justify-between px-5 py-4">
               <div>
-                <p className="text-sm font-medium">{t.label}</p>
-                {locked && <p className="text-xs text-destructive mt-0.5">Critical — cannot be disabled for supervisors</p>}
+                <p className="text-sm font-medium">{type.label}</p>
+                {type.critical && <p className="text-xs text-destructive mt-0.5">Critical demo alert remains enabled.</p>}
               </div>
               <button
-                onClick={() => toggle(t.key, t.critical)}
-                disabled={locked}
+                onClick={() => toggle(type.key, type.critical)}
+                disabled={type.critical}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                   !isDisabled ? 'bg-primary' : 'bg-muted-foreground/30'
-                } ${locked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } ${type.critical ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                aria-label={`${type.label} notification toggle`}
               >
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${!isDisabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </button>
@@ -82,14 +82,12 @@ export default function NotificationSettings() {
         })}
       </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="h-9 px-6 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50"
-        >
-          {saving ? 'Saving…' : 'Save Settings'}
-        </button>
+      <div className="flex items-center justify-end gap-3">
+        {saved && <span className="text-xs text-muted-foreground">Demo settings saved locally.</span>}
+        <Button onClick={save} disabled={saving} className="gap-2">
+          <Save className="w-4 h-4" />
+          {saving ? 'Saving...' : 'Save settings'}
+        </Button>
       </div>
     </div>
   );

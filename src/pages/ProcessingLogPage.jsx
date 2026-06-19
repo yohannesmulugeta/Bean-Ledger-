@@ -1,12 +1,12 @@
 // @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { processingService } from '@/services/processingService';
 import { supplierService } from '@/services/supplierService';
 import { warehouseService } from '@/services/warehouseService';
 import { sampleService } from '@/services/sampleService';
 import { purchaseService } from '@/services/purchaseService';
+import { buyerInspectionService } from '@/services/buyerInspectionService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import PendingSyncBadge from '@/components/shared/PendingSyncBadge';
@@ -511,7 +511,7 @@ export default function ProcessingLogPage() {
   });
   const { data: inspections = [] } = useQuery({
     queryKey: ['buyer-inspections'],
-    queryFn: () => base44.entities.BuyerInspection.list(),
+    queryFn: () => buyerInspectionService.list(),
   });
   const { data: purchases = [] } = useQuery({
     queryKey: ['purchase-records'],

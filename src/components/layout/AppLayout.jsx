@@ -11,6 +11,8 @@ import PendingApprovalScreen from '@/components/PendingApprovalScreen';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import EnvironmentWarning from '@/components/shared/EnvironmentWarning';
 
 export default function AppLayout() {
   const { role } = useRole();
@@ -35,10 +37,11 @@ export default function AppLayout() {
         <header className="sticky top-0 z-30 h-14 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 gap-3 shadow-sm">
           <OfflineIndicator />
           <div className="hidden sm:flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-            Demo Environment
-            <span className="font-normal text-amber-700">Synthetic data only</span>
+            Demo only
+            <span className="font-normal text-amber-700">not production auth</span>
           </div>
           <div className="flex-1" />
+          <NotificationBell />
           <Button variant="outline" size="sm" onClick={() => logout(true)} className="h-8 gap-1">
             <LogOut className="w-3.5 h-3.5" />
             Sign out
@@ -46,6 +49,7 @@ export default function AppLayout() {
         </header>
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden">
           <div className="px-3 sm:p-4 lg:p-8 min-w-0">
+            <EnvironmentWarning />
             {pendingCount > 0 && (
               <SyncStatusPanel
                 queue={queue}

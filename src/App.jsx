@@ -5,9 +5,6 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
-import WarehousePage from '@/pages/WarehousePage';
-import Processing from '@/pages/Processing';
-import Exports from '@/pages/Exports';
 import MasterData from '@/pages/MasterData';
 import PurchaseRegistration from '@/pages/PurchaseRegistration.jsx';
 import WarehouseReceiptPage from '@/pages/WarehouseReceipt';
@@ -52,13 +49,13 @@ const AuthenticatedApp = () => {
       <Route path="/signup" element={<Navigate to="/login" replace />} />
       <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
       <Route path="/reset-password" element={<Navigate to="/login" replace />} />
-      {/* All app routes — no auth guard */}
+      {/* Protected demo app routes */}
       <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />}>
         <Route path="/" element={<ModuleRouteGuard path="/"><Dashboard /></ModuleRouteGuard>} />
         <Route path="/purchases" element={<Navigate to="/purchase-registration" replace />} />
-        <Route path="/warehouse" element={<ModuleRouteGuard path="/warehouse"><WarehousePage /></ModuleRouteGuard>} />
-        <Route path="/processing" element={<ModuleRouteGuard path="/processing"><Processing /></ModuleRouteGuard>} />
-        <Route path="/exports" element={<ModuleRouteGuard path="/exports"><Exports /></ModuleRouteGuard>} />
+        <Route path="/warehouse" element={<Navigate to="/warehouse-receipt" replace />} />
+        <Route path="/processing" element={<Navigate to="/processing-log" replace />} />
+        <Route path="/exports" element={<Navigate to="/export-contracts" replace />} />
         <Route path="/master-data" element={<ModuleRouteGuard path="/master-data"><MasterData /></ModuleRouteGuard>} />
         <Route path="/purchase-registration" element={<ModuleRouteGuard path="/purchase-registration"><PurchaseRegistration /></ModuleRouteGuard>} />
         <Route path="/warehouse-receipt" element={<ModuleRouteGuard path="/warehouse-receipt"><WarehouseReceiptPage /></ModuleRouteGuard>} />
@@ -71,9 +68,9 @@ const AuthenticatedApp = () => {
         <Route path="/materials-register" element={<ModuleRouteGuard path="/materials-register"><MaterialsRegister /></ModuleRouteGuard>} />
         <Route path="/bag-ledger" element={<ModuleRouteGuard path="/bag-ledger"><BagLedger /></ModuleRouteGuard>} />
         <Route path="/stock-report" element={<ModuleRouteGuard path="/stock-report"><StockReport /></ModuleRouteGuard>} />
-        <Route path="/notification-settings" element={<NotificationSettings />} />
+        <Route path="/notification-settings" element={<ModuleRouteGuard path="/notification-settings"><NotificationSettings /></ModuleRouteGuard>} />
         <Route path="/activity-log" element={<ModuleRouteGuard path="/activity-log"><ActivityLog /></ModuleRouteGuard>} />
-        <Route path="/notification-history" element={<NotificationHistory />} />
+        <Route path="/notification-history" element={<ModuleRouteGuard path="/notification-history"><NotificationHistory /></ModuleRouteGuard>} />
         <Route path="/permissions" element={<ModuleRouteGuard path="/permissions"><Permissions /></ModuleRouteGuard>} />
         <Route path="/user-report" element={<ModuleRouteGuard path="/user-report"><UserActivityReport /></ModuleRouteGuard>} />
         <Route path="/purchase-orders-report" element={<ModuleRouteGuard path="/purchase-orders-report"><PurchaseOrdersReport /></ModuleRouteGuard>} />

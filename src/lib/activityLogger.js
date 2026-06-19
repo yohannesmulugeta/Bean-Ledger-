@@ -1,4 +1,5 @@
-import { base44 } from '@/api/base44Client';
+import { DEMO_META } from '@/services/demoData';
+import { createDemoId, readDemoStore, writeDemoStore } from '@/services/demoStore';
 
 /**
  * Log an activity. Best-effort — failures should not block business actions.
@@ -22,17 +23,27 @@ export async function logActivity({
   reason,
 }) {
   try {
-    const me = await base44.auth.me().catch(() => null);
-    await base44.entities.ActivityLog.create({
-      user_email: me?.email || 'unknown',
+    const store = readDemoStore();
+    store.auditLogs = store.auditLogs || [];
+    store.auditLogs.push({
+      id: createDemoId(),
+      organization_id: DEMO_META.organizationId,
+      profile_id: DEMO_META.profileId,
+      is_demo: true,
+      user_email: 'demo-admin@kkgt.local',
       action_type,
       screen_name,
+      entity_table: entity_type || 'demo_records',
       entity_type: entity_type || '',
       entity_id: entity_id || '',
       record_description: record_description || '',
-      changes: changes && changes.length > 0 ? JSON.stringify(changes) : '',
+      changes: changes && changes.length > 0 ? changes : {},
       reason: reason || '',
+      created_at: new Date().toISOString(),
+      created_date: new Date().toISOString(),
+      archived_at: null,
     });
+    writeDemoStore(store);
   } catch (err) {
     console.warn('[activityLogger] failed:', err?.message || err);
   }

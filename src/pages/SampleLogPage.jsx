@@ -1,13 +1,14 @@
 // @ts-nocheck
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { sampleService } from '@/services/sampleService';
 import { supplierService } from '@/services/supplierService';
 import { warehouseService } from '@/services/warehouseService';
 import { processingService } from '@/services/processingService';
 import { outputService } from '@/services/outputService';
 import { purchaseService } from '@/services/purchaseService';
+import { exportService } from '@/services/exportService';
+import { buyerInspectionService } from '@/services/buyerInspectionService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import PendingSyncBadge from '@/components/shared/PendingSyncBadge';
@@ -414,11 +415,11 @@ export default function SampleLogPage() {
   });
   const { data: contracts = [] } = useQuery({
     queryKey: ['export-contracts'],
-    queryFn: () => base44.entities.ExportContract.list(),
+    queryFn: () => exportService.list(),
   });
   const { data: inspections = [] } = useQuery({
     queryKey: ['buyer-inspections'],
-    queryFn: () => base44.entities.BuyerInspection.list(),
+    queryFn: () => buyerInspectionService.list(),
   });
 
   const coffeeTypes = useMemo(() => {
