@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { reportService } from '@/services/reportService';
+import { reportService, REPORT_CACHE_KEYS, REPORT_QUERY_KEYS } from '@/services/reportService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
@@ -1199,7 +1199,7 @@ function ExportContractsReport({ contracts }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Reports() {
-  const { data: snapshot = /** @type {any} */ ({}), fromCache, lastUpdated } = useOfflineQuery('phase9-report-snapshot', { queryKey: ['phase9-report-snapshot'], queryFn: () => reportService.snapshot(), staleTime: 60000 });
+  const { data: snapshot = /** @type {any} */ ({}), fromCache, lastUpdated } = useOfflineQuery(REPORT_CACHE_KEYS.snapshot, { queryKey: REPORT_QUERY_KEYS.snapshot, queryFn: () => reportService.snapshot(), staleTime: 60000 });
   const purchases = snapshot.purchases || [];
   const receipts = snapshot.receipts || [];
   const sampleLogs = snapshot.sampleLogs || [];

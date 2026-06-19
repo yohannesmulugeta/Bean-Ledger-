@@ -4,7 +4,7 @@ import {
   ShieldOff, Warehouse, Package, Coins, AlertCircle,
   RefreshCw, TrendingUp, Users, Factory, BarChart3, ClipboardCheck,
 } from 'lucide-react';
-import { reportService } from '@/services/reportService';
+import { reportService, REPORT_CACHE_KEYS, REPORT_QUERY_KEYS } from '@/services/reportService';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
 import { calcTotalPaid, calcPaymentStatus } from '@/lib/paymentUtils';
@@ -88,8 +88,8 @@ export default function Dashboard() {
   const location = useLocation();
   const accessDenied = location.state?.accessDenied;
 
-  const { data: snapshot = /** @type {any} */ ({}), isLoading, fromCache: fromCachePurchases, lastUpdated } = useOfflineQuery('phase9-dashboard-snapshot', {
-    queryKey: ['phase9-dashboard-snapshot'],
+  const { data: snapshot = /** @type {any} */ ({}), isLoading, fromCache: fromCachePurchases, lastUpdated } = useOfflineQuery(REPORT_CACHE_KEYS.snapshot, {
+    queryKey: REPORT_QUERY_KEYS.snapshot,
     queryFn: () => reportService.snapshot(),
     staleTime: 60000,
   });

@@ -12,6 +12,18 @@ import { buyerInspectionService } from './buyerInspectionService';
 import { bagService } from './bagService';
 import { materialService } from './materialService';
 
+export const REPORT_CACHE_KEYS = Object.freeze({
+  snapshot: 'phase9-report-snapshot',
+  activeSnapshot: 'phase9-active-report-snapshot',
+  dataAuditSnapshot: 'phase9-data-audit-snapshot',
+});
+
+export const REPORT_QUERY_KEYS = Object.freeze({
+  snapshot: ['phase9-report-snapshot'],
+  activeSnapshot: ['phase9-active-report-snapshot'],
+  dataAuditSnapshot: ['phase9-data-audit-snapshot'],
+});
+
 const byNewest = (field) => (a, b) => String(b[field] || b.created_at || '').localeCompare(String(a[field] || a.created_at || ''));
 const active = (item) => !item.archived_at && item.archived !== true;
 

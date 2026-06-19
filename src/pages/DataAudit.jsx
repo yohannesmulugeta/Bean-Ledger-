@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { reportService } from '@/services/reportService';
+import { reportService, REPORT_QUERY_KEYS } from '@/services/reportService';
 import { useRole } from '@/lib/role-hooks';
 import runDataAudit from '@/lib/dataAudit';
 import AccessDenied from '@/components/AccessDenied';
@@ -24,7 +24,7 @@ const SEV_STYLE = {
 };
 
 function useAuditData() {
-  const audit = useQuery({ queryKey: ['phase9-data-audit-snapshot'], queryFn: () => reportService.dataAuditSnapshot(), staleTime: 0 });
+  const audit = useQuery({ queryKey: REPORT_QUERY_KEYS.dataAuditSnapshot, queryFn: () => reportService.dataAuditSnapshot(), staleTime: 0 });
   const data = audit.data || {};
 
   return {

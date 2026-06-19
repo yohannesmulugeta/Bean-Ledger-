@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { reportService } from '@/services/reportService';
+import { reportService, REPORT_QUERY_KEYS } from '@/services/reportService';
 import { format, startOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,7 +44,7 @@ export default function WarehouseReceiptReport() {
 
   // Fetch data
   const { data: snapshot = /** @type {any} */ ({}), isLoading: loadingReceipts, refetch: refetchReceipts } = useQuery({
-    queryKey: ['phase9-wrr-snapshot'],
+    queryKey: REPORT_QUERY_KEYS.activeSnapshot,
     queryFn: () => reportService.activeSnapshot(),
     staleTime: 60000,
   });

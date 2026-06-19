@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { reportService } from '@/services/reportService';
+import { reportService, REPORT_CACHE_KEYS, REPORT_QUERY_KEYS } from '@/services/reportService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
@@ -152,7 +152,7 @@ export default function StockReport() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ supplier: 'all', coffeeType: 'all', showZero: false });
 
-  const { data: snapshot = /** @type {any} */ ({}), refetch: refetchSnapshot, fromCache: fromCacheReceipts, lastUpdated } = useOfflineQuery('phase9-stock-snapshot', { queryKey: ['phase9-stock-snapshot'], queryFn: () => reportService.snapshot(), staleTime: 60000 });
+  const { data: snapshot = /** @type {any} */ ({}), refetch: refetchSnapshot, fromCache: fromCacheReceipts, lastUpdated } = useOfflineQuery(REPORT_CACHE_KEYS.snapshot, { queryKey: REPORT_QUERY_KEYS.snapshot, queryFn: () => reportService.snapshot(), staleTime: 60000 });
   const purchases = snapshot.purchases || [];
   const receipts = snapshot.receipts || [];
   const sampleLogs = snapshot.sampleLogs || [];

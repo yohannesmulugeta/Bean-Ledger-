@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { reportService } from '@/services/reportService';
+import { reportService, REPORT_QUERY_KEYS } from '@/services/reportService';
 import { useRole } from '@/lib/role-hooks';
 import { Navigate } from 'react-router-dom';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -56,16 +56,16 @@ export default function PurchaseOrdersReport() {
   // Auto-refresh every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ['por-purchases'] });
-      queryClient.invalidateQueries({ queryKey: ['por-receipts'] });
+      queryClient.invalidateQueries({ queryKey: REPORT_QUERY_KEYS.snapshot });
       setLastUpdated(new Date());
     }, 60000);
     return () => clearInterval(interval);
   }, [queryClient]);
 
   const { data: snapshot = /** @type {any} */ ({}), isLoading } = useQuery({
-    queryKey: ['phase9-por-snapshot'],
+    queryKey: REPORT_QUERY_KEYS.snapshot,
     queryFn: () => reportService.snapshot(),
+    staleTime: 60000,
   });
   const purchases = snapshot.purchases || [];
   const receipts = snapshot.receipts || [];
