@@ -40,3 +40,5 @@ exports/base44/manual-drop/
 # Supabase local runtime metadata
 supabase/.branches/
 supabase/.temp/
+
+.vercel
