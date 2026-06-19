@@ -2,7 +2,8 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Input = /** @type {any} */ (React.forwardRef(({ className, type, ...props }, ref) => {
+const Input = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, type, ...rest } = /** @type {any} */ (props);
   return (
     (<input
       type={type}
@@ -11,7 +12,7 @@ const Input = /** @type {any} */ (React.forwardRef(({ className, type, ...props 
         className
       )}
       ref={ref}
-      {...props} />)
+      {...rest} />)
   );
 }))
 Input.displayName = "Input"

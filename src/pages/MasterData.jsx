@@ -25,7 +25,7 @@ function getExpiryStatus(expiryDate) {
   today.setHours(0, 0, 0, 0);
   const expiry = new Date(expiryDate);
   if (expiry < today) return 'expired';
-  const diff = (expiry - today) / (1000 * 60 * 60 * 24);
+  const diff = (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
   if (diff <= 30) return 'warning';
   return 'ok';
 }
@@ -76,7 +76,7 @@ function SupplierFormDialog({ open, onOpenChange, initialData, onSubmit, isSubmi
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const data = { ...form };
+    const data = /** @type {any} */ ({ ...form });
     if (data.opening_stock_kg !== '') data.opening_stock_kg = parseFloat(data.opening_stock_kg);
     else delete data.opening_stock_kg;
     onSubmit(data);
@@ -225,7 +225,11 @@ export default function MasterData() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['suppliers'] }); setDialogOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => supplierService.update(id, data),
+    /** @param {any} variables */
+    mutationFn: (variables) => {
+      const { id, data } = variables;
+      return supplierService.update(id, data);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['suppliers'] }); setDialogOpen(false); setEditRecord(null); },
   });
   const deleteMutation = useMutation({

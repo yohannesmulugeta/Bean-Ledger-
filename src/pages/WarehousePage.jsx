@@ -54,16 +54,22 @@ export default function WarehousePage() {
   const { isOnline, guardSave, OfflineDialog } = useOfflineSaveGuard();
 
   const createMutation = useMutation({
+    /** @param {any} data */
     mutationFn: (data) => base44.entities.WarehouseInventory.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['inventory'] }); setDialogOpen(false); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.WarehouseInventory.update(id, data),
+    /** @param {any} variables */
+    mutationFn: (variables) => {
+      const { id, data } = variables;
+      return base44.entities.WarehouseInventory.update(id, data);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['inventory'] }); setDialogOpen(false); setEditing(null); },
   });
 
   const deleteMutation = useMutation({
+    /** @param {any} id */
     mutationFn: (id) => base44.entities.WarehouseInventory.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['inventory'] }); setDeleteTarget(null); },
   });
@@ -106,6 +112,7 @@ export default function WarehousePage() {
         columns={[...COLUMNS, actionsColumn]}
         data={inventory}
         isLoading={isLoading}
+        onRowClick={() => {}}
         emptyMessage="No inventory records. Click 'Add Inventory' to get started."
       />
 

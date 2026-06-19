@@ -57,16 +57,22 @@ export default function Exports() {
   });
 
   const createMutation = useMutation({
+    /** @param {any} data */
     mutationFn: (data) => base44.entities.Export.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exports'] }); setDialogOpen(false); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Export.update(id, data),
+    /** @param {any} variables */
+    mutationFn: (variables) => {
+      const { id, data } = variables;
+      return base44.entities.Export.update(id, data);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exports'] }); setDialogOpen(false); setEditing(null); },
   });
 
   const deleteMutation = useMutation({
+    /** @param {any} id */
     mutationFn: (id) => base44.entities.Export.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exports'] }); setDeleteTarget(null); },
   });
@@ -105,6 +111,7 @@ export default function Exports() {
         columns={[...COLUMNS, actionsColumn]}
         data={exports}
         isLoading={isLoading}
+        onRowClick={() => {}}
         emptyMessage="No export contracts yet. Click 'New Export' to get started."
       />
 

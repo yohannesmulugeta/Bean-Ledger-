@@ -59,16 +59,22 @@ export default function Purchases() {
   const { isOnline, guardSave, OfflineDialog } = useOfflineSaveGuard();
 
   const createMutation = useMutation({
+    /** @param {any} data */
     mutationFn: (data) => base44.entities.Purchase.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchases'] }); setDialogOpen(false); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Purchase.update(id, data),
+    /** @param {any} variables */
+    mutationFn: (variables) => {
+      const { id, data } = variables;
+      return base44.entities.Purchase.update(id, data);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchases'] }); setDialogOpen(false); setEditing(null); },
   });
 
   const deleteMutation = useMutation({
+    /** @param {any} id */
     mutationFn: (id) => base44.entities.Purchase.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchases'] }); setDeleteTarget(null); },
   });
@@ -111,6 +117,7 @@ export default function Purchases() {
         columns={[...COLUMNS, actionsColumn]}
         data={purchases}
         isLoading={isLoading}
+        onRowClick={() => {}}
         emptyMessage="No purchases recorded yet. Click 'New Purchase' to get started."
       />
 

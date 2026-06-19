@@ -6,7 +6,7 @@ import jsPDF from 'jspdf';
 
 const fmt = (n) => (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function Row({ label, value, valueClass }) {
+function Row({ label, value, valueClass = '' }) {
   return (
     <div className="flex justify-between py-1.5 border-b border-border/50 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>

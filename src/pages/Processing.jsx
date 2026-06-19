@@ -53,16 +53,22 @@ export default function Processing() {
   });
 
   const createMutation = useMutation({
+    /** @param {any} data */
     mutationFn: (data) => base44.entities.ProcessingBatch.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['batches'] }); setDialogOpen(false); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ProcessingBatch.update(id, data),
+    /** @param {any} variables */
+    mutationFn: (variables) => {
+      const { id, data } = variables;
+      return base44.entities.ProcessingBatch.update(id, data);
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['batches'] }); setDialogOpen(false); setEditing(null); },
   });
 
   const deleteMutation = useMutation({
+    /** @param {any} id */
     mutationFn: (id) => base44.entities.ProcessingBatch.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['batches'] }); setDeleteTarget(null); },
   });
@@ -101,6 +107,7 @@ export default function Processing() {
         columns={[...COLUMNS, actionsColumn]}
         data={batches}
         isLoading={isLoading}
+        onRowClick={() => {}}
         emptyMessage="No processing batches yet. Click 'New Batch' to get started."
       />
 

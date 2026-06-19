@@ -2,7 +2,8 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Textarea = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => {
+const Textarea = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
   return (
     (<textarea
       className={cn(
@@ -10,7 +11,7 @@ const Textarea = /** @type {any} */ (React.forwardRef(({ className, ...props }, 
         className
       )}
       ref={ref}
-      {...props} />)
+      {...rest} />)
   );
 }))
 Textarea.displayName = "Textarea"

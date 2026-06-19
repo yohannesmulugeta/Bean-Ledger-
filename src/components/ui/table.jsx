@@ -2,76 +2,98 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Table = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props} />
-  </div>
-)))
+const Table = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return (
+    <div className="relative w-full overflow-auto">
+      <table
+        ref={ref}
+        className={cn("w-full caption-bottom text-sm", className)}
+        {...rest} />
+    </div>
+  );
+}))
 Table.displayName = "Table"
 
-const TableHeader = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
-)))
+const TableHeader = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...rest} />;
+}))
 TableHeader.displayName = "TableHeader"
 
-const TableBody = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <tbody
-    ref={ref}
-    className={cn("[&_tr:last-child]:border-0", className)}
-    {...props} />
-)))
+const TableBody = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return (
+    <tbody
+      ref={ref}
+      className={cn("[&_tr:last-child]:border-0", className)}
+      {...rest} />
+  );
+}))
 TableBody.displayName = "TableBody"
 
-const TableFooter = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <tfoot
-    ref={ref}
-    className={cn("border-t bg-muted/50 font-medium [&>tr]:last:border-b-0", className)}
-    {...props} />
-)))
+const TableFooter = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return (
+    <tfoot
+      ref={ref}
+      className={cn("border-t bg-muted/50 font-medium [&>tr]:last:border-b-0", className)}
+      {...rest} />
+  );
+}))
 TableFooter.displayName = "TableFooter"
 
-const TableRow = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <tr
-    ref={ref}
-    className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-      className
-    )}
-    {...props} />
-)))
+const TableRow = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return (
+    <tr
+      ref={ref}
+      className={cn(
+        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        className
+      )}
+      {...rest} />
+  );
+}))
 TableRow.displayName = "TableRow"
 
-const TableHead = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <th
-    ref={ref}
-    className={cn(
-      "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-      className
-    )}
-    {...props} />
-)))
+const TableHead = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return (
+    <th
+      ref={ref}
+      className={cn(
+        "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        className
+      )}
+      {...rest} />
+  );
+}))
 TableHead.displayName = "TableHead"
 
-const TableCell = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <td
-    ref={ref}
-    className={cn(
-      "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-      className
-    )}
-    {...props} />
-)))
+const TableCell = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return (
+    <td
+      ref={ref}
+      className={cn(
+        "p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        className
+      )}
+      {...rest} />
+  );
+}))
 TableCell.displayName = "TableCell"
 
-const TableCaption = /** @type {any} */ (React.forwardRef(({ className, ...props }, ref) => (
-  <caption
-    ref={ref}
-    className={cn("mt-4 text-sm text-muted-foreground", className)}
-    {...props} />
-)))
+const TableCaption = /** @type {any} */ (React.forwardRef((props, ref) => {
+  const { className, ...rest } = /** @type {any} */ (props);
+  return (
+    <caption
+      ref={ref}
+      className={cn("mt-4 text-sm text-muted-foreground", className)}
+      {...rest} />
+  );
+}))
 TableCaption.displayName = "TableCaption"
 
 export {

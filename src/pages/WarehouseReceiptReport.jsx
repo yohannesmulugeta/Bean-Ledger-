@@ -179,7 +179,7 @@ export default function WarehouseReceiptReport() {
   }).length;
 
   // Minutes since last update
-  const minutesAgo = Math.floor((new Date() - lastUpdated) / 60000);
+      const minutesAgo = Math.floor((Date.now() - lastUpdated.getTime()) / 60000);
 
   // --- EXPORT PDF ---
   const handleExportPDF = () => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Warehouse, Weight, TrendingDown, TrendingUp } from 'lucide-react';
 
-function Card({ icon: Icon, label, value, sub, color }) {
+function Card({ icon: Icon, label, value, sub = '', color }) {
   return (
     <div className="bg-card rounded-xl border border-border p-4 flex items-start gap-3">
       <div className={`p-2 rounded-lg ${color}`}>
