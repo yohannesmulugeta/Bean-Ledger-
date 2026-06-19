@@ -463,7 +463,7 @@ function PurchaseSummaryReport({ purchases, suppliers, receipts }) {
                 {colDefs.map(col => (
                   <th
                     key={col.label}
-                    style={{ minWidth: col.width, textAlign: col.align }}
+                    style={{ minWidth: col.width, textAlign: /** @type {React.CSSProperties['textAlign']} */ (col.align) }}
                     className="px-2 py-[6px] text-[8px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap border-b border-border"
                   >
                     {col.label}
@@ -1192,7 +1192,7 @@ function ExportContractsReport({ contracts }) {
           />
         </div>
       </div>
-      <ExportContractsReportTable contracts={filtered} />
+      <ExportContractsReportTable contracts={filtered} isLoading={false} />
     </div>
   );
 }

@@ -21,7 +21,7 @@ function fmt(n, d = 0) {
 }
 
 // ── KPI Card ─────────────────────────────────────────────────────────────────
-function KpiCard({ label, value, unit, sub, icon: Icon, accentColor = '#1F2A24', highlight = false }) {
+function KpiCard({ label, value, unit = '', sub, icon: Icon, accentColor = '#1F2A24', highlight = false }) {
   return (
     <div
       className="bg-white rounded-2xl border border-border shadow-sm flex flex-col justify-between p-5 relative overflow-hidden min-w-0"

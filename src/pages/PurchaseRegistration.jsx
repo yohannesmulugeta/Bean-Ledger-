@@ -299,7 +299,7 @@ function PurchaseFormDialog({ open, onOpenChange, initialData, suppliers, allRec
     onSubmit(data);
   };
 
-  const ReadOnlyField = ({ label, value, note, highlight }) => (
+  const ReadOnlyField = ({ label, value, note = '', highlight = false }) => (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium text-muted-foreground">{label}{note && <span className="ml-1 text-[10px] italic">{note}</span>}</Label>
       <Input value={value} readOnly className={`font-medium ${highlight ? 'bg-primary/10 text-primary' : 'bg-muted'}`} />
@@ -573,6 +573,7 @@ export default function PurchaseRegistration() {
     },
   });
   const updateMutation = useMutation({
+    /** @param {{ id: string, data: any, previous?: any }} payload */
     mutationFn: ({ id, data }) => purchaseService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-records'] });
@@ -581,6 +582,7 @@ export default function PurchaseRegistration() {
     },
   });
   const archiveMutation = useMutation({
+    /** @param {{ purchase: any, reason: string }} payload */
     mutationFn: ({ purchase, reason }) => purchaseService.archive(purchase.id, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-records'] });

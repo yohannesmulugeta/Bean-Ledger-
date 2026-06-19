@@ -6,10 +6,9 @@ import { format } from 'date-fns';
  * OfflineDataBanner — shows "Showing last saved data" when data is from cache.
  * Position at the top of a data table or card list.
  *
- * @param {boolean} visible - Whether to show the banner
- * @param {number|null} lastUpdated - Timestamp of cached data
+ * @param {{ visible?: boolean, lastUpdated?: number|null }} props
  */
-export default function OfflineDataBanner({ visible, lastUpdated }) {
+export default function OfflineDataBanner({ visible = false, lastUpdated = null }) {
   if (!visible) return null;
 
   const timeStr = lastUpdated

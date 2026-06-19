@@ -2,7 +2,7 @@ import React from 'react';
 import { useRole, usePermission } from '@/lib/role-hooks';
 import AccessDenied from '@/components/AccessDenied';
 
-export default function RoleGuard({ allowedRoles, moduleKey, action, fallback, children }) {
+export default function RoleGuard({ allowedRoles, moduleKey = null, action = null, fallback = null, children = null }) {
   const { role, isAdmin } = useRole();
   const { canPerform } = usePermission();
 

@@ -30,7 +30,7 @@ export function filterByDateRange(records, range, dateField = 'purchase_date') {
  *   preset, onPresetChange, customFrom, customTo, onApplyCustom
  * But also accepts the simpler: from, to, onChange
  */
-export default function BalanceDateFilter({ from, to, onChange, customFrom, customTo, onApplyCustom }) {
+export default function BalanceDateFilter({ from, to, onChange, customFrom = '', customTo = '', onApplyCustom = null }) {
   // Support both old and new prop styles
   const fromVal = from ?? customFrom ?? '';
   const toVal = to ?? customTo ?? '';

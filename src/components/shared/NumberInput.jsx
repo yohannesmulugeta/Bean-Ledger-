@@ -23,7 +23,7 @@ export default function NumberInput({
   onChange,
   decimals = 2,
   suffix = '',
-  className,
+  className = '',
   ...rest
 }) {
   const [focused, setFocused] = useState(false);
