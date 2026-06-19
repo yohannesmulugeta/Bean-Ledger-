@@ -26,12 +26,13 @@ import { enqueueOfflineAction } from '@/lib/offlineQueue';
  * When offline: queues the action and shows a "draft saved" toast.
  * When online: calls the provided online handler.
  */
-export default function useOfflineSubmit({ entityName, userEmail, onQueued } = {}) {
+export default function useOfflineSubmit(options = {}) {
+  const { entityName, userEmail, onQueued } = /** @type {any} */ (options);
   const [showOfflineDialog, setShowOfflineDialog] = useState(false);
   const [showQueueSuccess, setShowQueueSuccess] = useState(false);
 
   const offlineSubmit = useCallback(
-    (data, { online, actionType = 'create' }) => {
+    (data, { online, actionType = /** @type {'create'|'update'} */ ('create') }) => {
       if (navigator.onLine) {
         online();
       } else {

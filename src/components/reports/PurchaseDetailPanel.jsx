@@ -131,7 +131,7 @@ function generatePDF(record, receipt, payments, costs, totals) {
         fmt(parseFloat(pay.amount_etb)),
       ];
       cells.forEach((c, i) => {
-        const align = i === 5 ? { align: 'right' } : {};
+        const align = /** @type {any} */ (i === 5 ? { align: 'right' } : {});
         const xPos = i === 5 ? x + colW[i] - 2 : x + 1;
         doc.text(String(c), xPos, y, align);
         x += colW[i];

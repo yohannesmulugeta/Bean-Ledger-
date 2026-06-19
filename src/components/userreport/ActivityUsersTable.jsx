@@ -41,7 +41,7 @@ function LastActiveLabel({ ts }) {
   return <span className="text-muted-foreground text-xs">{days} days ago</span>;
 }
 
-function StatusBadge({ lastActive, dateRange }) {
+function StatusBadge({ lastActive, dateRange = null }) {
   if (!lastActive) return <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500">Inactive</span>;
   const today = new Date().toISOString().slice(0, 10);
   if (lastActive.slice(0, 10) === today) return <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">Active</span>;

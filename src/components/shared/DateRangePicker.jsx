@@ -143,7 +143,8 @@ export default function DateRangePicker({ from, to, onChange, placeholder = 'Sel
     }
   };
 
-  const handlePreset = ([s, e]) => {
+  const handlePreset = (range) => {
+    const [s, e] = /** @type {[Date, Date]} */ (range);
     setDraft({ start: s, end: e });
     setSelecting(false);
     if (inline) {

@@ -1300,6 +1300,6 @@ export default function runDataAudit(data) {
 
   // Attach check count for display
   const checkCount = 40;
-  results._checkCount = checkCount;
+  /** @type {any} */ (results)._checkCount = checkCount;
   return results;
 }

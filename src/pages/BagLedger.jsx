@@ -112,6 +112,7 @@ export default function BagLedger() {
             iconColor="text-green-700"
             label="Bags to Return (Agent Level)"
             value={fmt(agentTotals.totalNetToReturn)}
+            unit="bags"
             sub="Net bags owed back from agents"
           />
           <SummaryCard
@@ -120,6 +121,7 @@ export default function BagLedger() {
             iconColor="text-orange-600"
             label="Bags to Return (Supplier Level)"
             value={fmt(supplierTotals.totalNetToReturn)}
+            unit="bags"
             sub="Net bags owed back from suppliers"
           />
           <SummaryCard

@@ -23,7 +23,7 @@ export default function RecordFormDialog({ open, onOpenChange, title, fields, in
 
   const handleChange = (name, value) => {
     setFormData(prev => {
-      const updated = { ...prev, [name]: value };
+      const updated = /** @type {any} */ ({ ...prev, [name]: value });
       // Auto-calculate total_cost for purchases
       if ((name === 'quantity_kg' || name === 'price_per_kg') && 'total_cost' in updated) {
         updated.total_cost = (parseFloat(updated.quantity_kg) || 0) * (parseFloat(updated.price_per_kg) || 0);

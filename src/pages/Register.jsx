@@ -44,6 +44,7 @@ export default function Register() {
         icon={CheckCircle}
         title="Account created"
         subtitle="You can now sign in with your credentials"
+        footer={null}
       >
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-6">

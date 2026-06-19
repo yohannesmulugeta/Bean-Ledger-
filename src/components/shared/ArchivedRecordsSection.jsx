@@ -19,6 +19,7 @@ export default function ArchivedRecordsSection({ entityName, screenName, queryKe
   });
 
   const restoreMutation = useMutation({
+    /** @param {any} record */
     mutationFn: (record) => archiveService.restore(
       entityName,
       record,

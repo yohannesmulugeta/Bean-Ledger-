@@ -9,9 +9,9 @@ import { format } from 'date-fns';
 // ═══ CONSTANTS ══════════════════════════════════════════════════════════════════
 const COMPANY_NAME = 'BeanLedger Import Export';
 const COMPANY_TAGLINE = 'Coffee Supply Chain ERP';
-const BRAND_PRIMARY = [31, 42, 36];         // #1F2A24 - dark green-black
-const BRAND_BRASS = [176, 141, 87];        // #B08D57 - brass accent
-const BRAND_LIGHT_GREEN = [240, 247, 240]; // #F0F7F0 - alternating row bg
+const BRAND_PRIMARY = /** @type {[number, number, number]} */ ([31, 42, 36]);         // #1F2A24 - dark green-black
+const BRAND_BRASS = /** @type {[number, number, number]} */ ([176, 141, 87]);        // #B08D57 - brass accent
+const BRAND_LIGHT_GREEN = /** @type {[number, number, number]} */ ([240, 247, 240]); // #F0F7F0 - alternating row bg
 const BRAND_DARK_GREEN_HEX = '126433';
 const BRAND_BRASS_HEX = 'F06721';
 

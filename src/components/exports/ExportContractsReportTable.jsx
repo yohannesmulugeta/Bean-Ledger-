@@ -310,7 +310,7 @@ export default function ExportContractsReportTable({ contracts = [], isLoading }
                     {COLS.map((col, ci) => {
                       const isFrozen = col.frozen;
                       const leftOffset = ci === 0 ? 0 : ci === 1 ? COLS[0].width : undefined;
-                      let content = '';
+                      let content = /** @type {React.ReactNode} */ ('');
                       if (col.key === '#') content = <span className="text-xs text-muted-foreground font-semibold">TOTAL</span>;
                       else if (col.key === 'export_kg') content = <span className="text-primary">{fmt(totals.export_kg, 0)}</span>;
                       else if (col.key === 'total_usd') content = <span className="text-primary">${fmt(totals.total_usd, 2)}</span>;
