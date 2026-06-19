@@ -66,7 +66,7 @@ assert.match(gitignore, /exports\/base44\/manual-drop\//, 'real Base44 manual ex
 assert.match(gitignore, /exports\/base44\/runs\//, 'generated Base44 export runs are ignored');
 
 const envExample = read('.env.example');
-assert.match(envExample, /Never put service-role credentials/, '.env.example warns against service role credentials');
+assert.match(envExample, /server-only credentials/, '.env.example warns against server-only credentials');
 assert.match(envExample, /VITE_SUPABASE_URL/, '.env.example documents Supabase URL');
 assert.match(envExample, /VITE_SUPABASE_ANON_KEY/, '.env.example documents anon key');
 
