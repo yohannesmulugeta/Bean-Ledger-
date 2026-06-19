@@ -4,7 +4,7 @@ project_id = "bean-ledger-local"
 enabled = true
 
 [db]
-major_version = 15
+major_version = 17
 
 [studio]
 enabled = true

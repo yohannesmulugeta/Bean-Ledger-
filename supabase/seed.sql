@@ -19,7 +19,7 @@ insert into auth.users (
   'authenticated',
   'authenticated',
   'demo-admin@kkgt.local',
-  crypt('password', gen_salt('bf')),
+  extensions.crypt('password', extensions.gen_salt('bf')),
   now(),
   now(),
   now(),
