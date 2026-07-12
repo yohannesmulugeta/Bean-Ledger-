@@ -18,6 +18,7 @@ import { purchaseService } from '@/services/purchaseService';
 import { warehouseService } from '@/services/warehouseService';
 import { processingService } from '@/services/processingService';
 import { outputService } from '@/services/outputService';
+import { userService } from '@/services/userService';
 
 function getThisWeekRange() {
   const now = new Date();
@@ -56,7 +57,7 @@ export default function UserActivityReport() {
   });
   const { data: users = [], isLoading: loadingUsers } = useQuery({
     queryKey: ['users'],
-    queryFn: () => Promise.resolve([{ id: 'demo-admin-local', email: 'demo-admin@kkgt.local', full_name: 'Demo Admin', role: 'admin' }]),
+    queryFn: () => userService.list(),
   });
 
   const isLoading = loadingActivity || loadingPurchases || loadingReceipts || loadingProcessing || loadingOutput || loadingUsers;

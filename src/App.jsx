@@ -31,6 +31,14 @@ const WarehouseReceiptReport = lazy(() => import('@/pages/WarehouseReceiptReport
 const UsersManagement = lazy(() => import('@/pages/UsersManagement'));
 const DataAudit = lazy(() => import('@/pages/DataAudit'));
 
+// New and rewritten pages
+const Purchases = lazy(() => import('@/pages/Purchases.jsx'));
+const WarehousePage = lazy(() => import('@/pages/WarehousePage.jsx'));
+const Processing = lazy(() => import('@/pages/Processing.jsx'));
+const Exports = lazy(() => import('@/pages/Exports.jsx'));
+const AdjustmentCenter = lazy(() => import('@/pages/AdjustmentCenter.jsx'));
+const SupplierRemainingExplanation = lazy(() => import('@/pages/SupplierRemainingExplanation.jsx'));
+
 const RouteLoadingFallback = () => (
   <div className="min-h-[50vh] flex items-center justify-center bg-background text-sm text-muted-foreground">
     Loading page...
@@ -68,10 +76,10 @@ const AuthenticatedApp = () => {
       {/* Protected demo app routes */}
       <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />}>
         <Route path="/" element={protectedRoute("/", Dashboard)} />
-        <Route path="/purchases" element={<Navigate to="/purchase-registration" replace />} />
-        <Route path="/warehouse" element={<Navigate to="/warehouse-receipt" replace />} />
-        <Route path="/processing" element={<Navigate to="/processing-log" replace />} />
-        <Route path="/exports" element={<Navigate to="/export-contracts" replace />} />
+        <Route path="/purchases" element={protectedRoute("/purchases", Purchases)} />
+        <Route path="/warehouse" element={protectedRoute("/warehouse", WarehousePage)} />
+        <Route path="/processing" element={protectedRoute("/processing", Processing)} />
+        <Route path="/exports" element={protectedRoute("/exports", Exports)} />
         <Route path="/master-data" element={protectedRoute("/master-data", MasterData)} />
         <Route path="/purchase-registration" element={protectedRoute("/purchase-registration", PurchaseRegistration)} />
         <Route path="/warehouse-receipt" element={protectedRoute("/warehouse-receipt", WarehouseReceiptPage)} />
@@ -93,6 +101,8 @@ const AuthenticatedApp = () => {
         <Route path="/warehouse-receipt-report" element={protectedRoute("/warehouse-receipt-report", WarehouseReceiptReport)} />
         <Route path="/users-management" element={protectedRoute("/users-management", UsersManagement)} />
         <Route path="/data-audit" element={protectedRoute("/data-audit", DataAudit)} />
+        <Route path="/adjustment-center" element={protectedRoute("/adjustment-center", AdjustmentCenter)} />
+        <Route path="/supplier-remaining-explanation" element={protectedRoute("/supplier-remaining-explanation", SupplierRemainingExplanation)} />
       </Route>
       <Route path="*" element={isAuthenticated ? <PageNotFound /> : <Navigate to="/login" replace />} />
     </Routes>

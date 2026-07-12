@@ -56,6 +56,12 @@ export const MODULES = {
   master_data: { key: 'master_data', label: 'Master Data', category: 'Admin', path: '/master-data' },
   users_roles: { key: 'users_roles', label: 'Users & Roles', category: 'Admin', path: '/users-management' },
   data_audit: { key: 'data_audit', label: 'Data Audit', category: 'Admin', path: '/data-audit' },
+  purchases_overview: { key: 'purchases_overview', label: 'Purchases Overview', category: 'Operations', path: '/purchases' },
+  warehouse_overview: { key: 'warehouse_overview', label: 'Warehouse Overview', category: 'Operations', path: '/warehouse' },
+  processing_overview: { key: 'processing_overview', label: 'Processing Overview', category: 'Operations', path: '/processing' },
+  exports_overview: { key: 'exports_overview', label: 'Exports Overview', category: 'Export & Stock', path: '/exports' },
+  adjustment_center: { key: 'adjustment_center', label: 'Adjustment Center', category: 'Admin', path: '/adjustment-center' },
+  supplier_remaining: { key: 'supplier_remaining', label: 'Supplier Balance Explanation', category: 'Reports', path: '/supplier-remaining-explanation' },
 };
 
 const ALL_MODULE_KEYS = Object.keys(MODULES);
@@ -149,18 +155,17 @@ export const DEFAULT_ROLE_PERMISSIONS = {
   unassigned: {},
 };
 
-// ── Default allowed paths per role (for sidebar) ───────────────────────────
 export const DEFAULT_ROLE_ROUTES = {
   admin: ADMIN_ROUTES,
   supervisor: ADMIN_ROUTES,
-  purchaser: ['/', '/purchase-registration', '/warehouse-receipt', '/sample-log', '/stock-report', '/master-data', '/bag-ledger', '/reports', '/purchase-orders-report', '/warehouse-receipt-report'],
-  warehouse_keeper: ['/', '/warehouse-receipt', '/sample-log', '/stock-report', '/bag-ledger', '/materials-register', '/warehouse-receipt-report'],
-  process_manager: ['/', '/sample-log', '/processing-log', '/output-report', '/stock-report', '/reports'],
+  purchaser: ['/', '/purchases', '/warehouse', '/processing', '/purchase-registration', '/warehouse-receipt', '/sample-log', '/stock-report', '/master-data', '/bag-ledger', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/supplier-remaining-explanation'],
+  warehouse_keeper: ['/', '/warehouse', '/warehouse-receipt', '/sample-log', '/stock-report', '/bag-ledger', '/materials-register', '/warehouse-receipt-report'],
+  process_manager: ['/', '/processing', '/sample-log', '/processing-log', '/output-report', '/stock-report', '/reports'],
   final_registrar: ['/', '/output-report', '/stock-report', '/export-contracts', '/buyer-inspections', '/reports'],
-  export_manager: ['/', '/export-contracts', '/buyer-inspections', '/stock-report', '/materials-register', '/bag-ledger', '/master-data', '/reports'],
-  accountant: ['/', '/purchase-registration', '/export-contracts', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/bag-ledger'],
-  auditor: ['/', '/purchase-registration', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/user-report', '/activity-log', '/data-audit'],
-  viewer: ['/', '/stock-report', '/reports'],
+  export_manager: ['/', '/exports', '/export-contracts', '/buyer-inspections', '/stock-report', '/materials-register', '/bag-ledger', '/master-data', '/reports'],
+  accountant: ['/', '/purchases', '/exports', '/purchase-registration', '/export-contracts', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/bag-ledger', '/supplier-remaining-explanation'],
+  auditor: ['/', '/purchases', '/warehouse', '/processing', '/exports', '/purchase-registration', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/user-report', '/activity-log', '/data-audit', '/supplier-remaining-explanation'],
+  viewer: ['/', '/purchases', '/warehouse', '/processing', '/exports', '/stock-report', '/reports'],
   unassigned: [],
 };
 
@@ -184,7 +189,16 @@ export function useRole() {
   const allowedRoutes = (() => {
     if (!role) return [];
     if (isAdmin) return [...ADMIN_ROUTES, '/users-management'];
-    const defaults = DEFAULT_ROLE_ROUTES[role] || [];
+    let defaults = DEFAULT_ROLE_ROUTES[role] || [];
+    try {
+      const stored = localStorage.getItem('kkgt_custom_role_routes');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed[role]) defaults = parsed[role];
+      }
+    } catch (e) {
+      console.error(e);
+    }
     return [...new Set([...defaults, ...SYSTEM_PATHS])];
   })();
 
@@ -214,6 +228,14 @@ export function usePermission() {
   const isSupervisor = role === ROLES.SUPERVISOR;
 
   const getSecuritySetting = (key, def = 'false') => {
+    try {
+      const stored = localStorage.getItem('kkgt_custom_security_settings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed[key] !== undefined) return String(parsed[key]);
+      }
+    } catch (e) {}
+    
     const demoSettings = {
       allow_supervisor_manage_users: 'false',
       allow_supervisor_manage_permissions: 'false',
@@ -224,7 +246,15 @@ export function usePermission() {
   const getModulePerms = (moduleKey) => {
     if (!moduleKey) return {};
     if (isAdmin) return { ...FULL_PERMS };
-    return DEFAULT_ROLE_PERMISSIONS[role]?.[moduleKey] || {};
+    let perms = DEFAULT_ROLE_PERMISSIONS[role]?.[moduleKey] || {};
+    try {
+      const stored = localStorage.getItem('kkgt_custom_role_permissions');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed[role]?.[moduleKey]) perms = parsed[role][moduleKey];
+      }
+    } catch (e) {}
+    return perms;
   };
 
   const canPerform = (moduleKey, action) => {
