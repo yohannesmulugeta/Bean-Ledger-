@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { reportService, REPORT_QUERY_KEYS } from '@/services/reportService';
-import { useRole } from '@/lib/role-hooks';
-import { Navigate } from 'react-router-dom';
 import { differenceInDays, parseISO } from 'date-fns';
 import { Download, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +11,7 @@ import PORFilterPanel from '@/components/por/PORFilterPanel';
 import PORGroupedTable from '@/components/por/PORGroupedTable';
 import PORDetailPanel from '@/components/por/PORDetailPanel';
 import { exportPORPDF, exportPORExcel } from '@/lib/porExport';
+import ReportWorkspaceNav from '@/components/reports/ReportWorkspaceNav';
 
 const fmt = n => typeof n === 'number' ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
 
@@ -41,10 +40,7 @@ function getPaymentStatus(purchase) {
 export { getBalance, getPaymentStatus, fmt };
 
 export default function PurchaseOrdersReport() {
-  const { role, isAdmin } = useRole();
   const queryClient = useQueryClient();
-  const isPurchaser = role === 'purchaser';
-  const canView = isAdmin || isPurchaser;
 
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [search, setSearch] = useState('');
@@ -158,13 +154,11 @@ export default function PurchaseOrdersReport() {
   const minutesAgo = Math.floor((Date.now() - lastUpdated.getTime()) / 60000);
   const lastUpdatedLabel = minutesAgo === 0 ? 'just now' : `${minutesAgo} minute${minutesAgo > 1 ? 's' : ''} ago`;
 
-  if (!canView) return <Navigate to="/" replace />;
-
   return (
     <div>
       <PageHeader
-        title="Purchase Orders Report"
-        description={`Complete overview of all coffee purchases and payment status · Last updated: ${lastUpdatedLabel}`}
+        title="Purchase Analysis"
+        description={`Coffee purchase and payment status analysis · Last updated: ${lastUpdatedLabel}`}
       >
         <Button
           variant="outline"
@@ -181,6 +175,7 @@ export default function PurchaseOrdersReport() {
           <Download className="w-4 h-4" /> Export PDF
         </Button>
       </PageHeader>
+      <ReportWorkspaceNav />
 
       <PORDateFilter dateRange={dateRange} onChange={setDateRange} />
 

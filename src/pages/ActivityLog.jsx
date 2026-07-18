@@ -1,18 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { auditService } from '@/services/auditService';
 import PageHeader from '@/components/shared/PageHeader';
-import { useRole } from '@/lib/role-hooks';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Search, ShieldOff } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { format } from 'date-fns';
 import TablePagination from '@/components/shared/TablePagination';
 
 const ACTIONS = ['Created', 'Edited', 'Archived', 'Restored'];
+const UserActivityReport = lazy(() => import('@/pages/UserActivityReport'));
 
 function ActionBadge({ type }) {
   const map = {
@@ -48,7 +49,8 @@ function ChangesCell({ raw }) {
 }
 
 export default function ActivityLog() {
-  const { isAdminOrSupervisor } = useRole();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeView = searchParams.get('view') === 'users' ? 'users' : 'audit';
   const [search, setSearch] = useState('');
   const [userFilter, setUserFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
@@ -61,6 +63,7 @@ export default function ActivityLog() {
     queryKey: ['activity-log'],
     queryFn: () => auditService.list(),
     refetchInterval: 30000,
+    enabled: activeView === 'audit',
   });
 
   const userList = useMemo(() => {
@@ -84,19 +87,42 @@ export default function ActivityLog() {
     });
   }, [logs, userFilter, actionFilter, fromDate, toDate, search]);
 
-  if (!isAdminOrSupervisor) {
+  const viewNav = (
+    <div className="mb-6 flex w-full overflow-hidden rounded-lg border border-border" role="tablist" aria-label="Audit views">
+      {[
+        ['audit', 'Audit Trail'],
+        ['users', 'User Activity Analysis'],
+      ].map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          role="tab"
+          aria-selected={activeView === value}
+          onClick={() => setSearchParams(value === 'users' ? { view: 'users' } : {}, { replace: true })}
+          className={`flex-1 px-3 py-2.5 text-sm font-semibold transition-colors ${activeView === value ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (activeView === 'users') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
-        <ShieldOff className="w-12 h-12 text-muted-foreground mb-3" />
-        <h2 className="text-xl font-bold mb-1">Access Denied</h2>
-        <p className="text-muted-foreground text-sm">This page is restricted to Admin or Supervisor roles.</p>
+      <div>
+        <PageHeader title="Audit & User Activity" description="Review user workload, transaction activity, and accountability" />
+        {viewNav}
+        <Suspense fallback={<div className="py-12 text-center text-sm text-muted-foreground">Loading user activity...</div>}>
+          <UserActivityReport embedded />
+        </Suspense>
       </div>
     );
   }
 
   return (
     <div>
-      <PageHeader title="Activity Log" description="Audit trail of all create, edit, archive, and restore actions" />
+      <PageHeader title="Audit & User Activity" description="Audit trail of create, edit, archive, and restore actions" />
+      {viewNav}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-end bg-muted/30 border border-border rounded-xl p-4 mb-5">

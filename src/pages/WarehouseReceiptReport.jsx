@@ -13,7 +13,7 @@ import * as XLSX from 'xlsx';
 
 import PageHeader from '@/components/shared/PageHeader';
 import TablePagination from '@/components/shared/TablePagination';
-import RoleGuard from '@/components/RoleGuard';
+import ReportWorkspaceNav from '@/components/reports/ReportWorkspaceNav';
 import WRRSummaryCards from '@/components/wrr/WRRSummaryCards';
 import WRRFilterPanel from '@/components/wrr/WRRFilterPanel';
 import WRRDetailPanel from '@/components/wrr/WRRDetailPanel';
@@ -373,11 +373,10 @@ export default function WarehouseReceiptReport() {
   ];
 
   return (
-    <RoleGuard allowedRoles={['admin', 'supervisor', 'purchaser']}>
-      <div className="p-6">
+      <div>
         <PageHeader
-          title="Warehouse Receipt Report"
-          description="Complete history of all warehouse receipts and KG records"
+          title="Warehouse Receipt Analysis"
+          description="Warehouse receipt history, quantities, and reconciliation details"
         >
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <RefreshCw className="w-3 h-3" />
@@ -400,6 +399,7 @@ export default function WarehouseReceiptReport() {
             <FileText className="w-3.5 h-3.5" /> Export PDF
           </Button>
         </PageHeader>
+        <ReportWorkspaceNav />
 
         {/* Summary Cards */}
         <div className="mb-6">
@@ -597,6 +597,5 @@ export default function WarehouseReceiptReport() {
           />
         )}
       </div>
-    </RoleGuard>
   );
 }

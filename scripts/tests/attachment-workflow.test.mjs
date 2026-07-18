@@ -93,9 +93,10 @@ assert.equal(seedAttachments.every((row) => row.is_demo), true, 'seed attachment
 assert.equal(seedAttachments.some((row) => row.archived_at), true, 'archived demo attachment seed exists');
 assert.equal(seedAttachments.some((row) => row.file_url), false, 'no permanent signed URL is stored in seed attachments');
 
-const purchaseRows = listForEntity(state, 'purchase_record', '44444444-4444-4444-8444-000000000001');
+const purchaseAttachment = seedAttachments.find((row) => row.entity_type === 'purchase_record' && !row.archived_at);
+const purchaseRows = listForEntity(state, 'purchase_record', purchaseAttachment.entity_id);
 assert.equal(purchaseRows.length, 1, 'list by entity returns purchase attachment');
-assert.equal(listForEntity(state, 'warehouse_receipt', '44444444-4444-4444-8444-000000000001').length, 0, 'entity filtering excludes wrong entity type');
+assert.equal(listForEntity(state, 'warehouse_receipt', purchaseAttachment.entity_id).length, 0, 'entity filtering excludes wrong entity type');
 
 const created = createAttachment(state, {
   entity_type: 'buyer_inspection',

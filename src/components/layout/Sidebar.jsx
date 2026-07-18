@@ -5,71 +5,27 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, ClipboardList, Ship, FileBarChart2, Database,
   Package, Layers, BarChart3, ShieldCheck, Boxes, FlaskConical, Factory,
-  PackageCheck, Activity, Lock, Users, Bell,
+  PackageCheck, Activity, Lock, Users, Bell, Scale, CalendarCheck, HandCoins, DatabaseBackup, X,
 } from 'lucide-react';
 import { useRole } from '@/lib/role-hooks';
+import { MODULES, NAV_GROUPS } from '@/lib/appModules';
 
-const MOBILE_GROUPS = [
-  {
-    id: 'home',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    direct: '/',
-    items: [],
-  },
-  {
-    id: 'purchase',
-    label: 'Purchases',
-    icon: ClipboardList,
-    flyoutTitle: 'Purchases',
-    items: [
-      { path: '/purchase-registration', label: 'Purchase Registration', icon: ClipboardList },
-      { path: '/warehouse-receipt', label: 'Warehouse Receipt', icon: PackageCheck },
-      { path: '/sample-log', label: 'Sample Log', icon: FlaskConical },
-      { path: '/processing-log', label: 'Processing', icon: Factory },
-      { path: '/output-report', label: 'Output Report', icon: BarChart3 },
-    ],
-  },
-  {
-    id: 'export',
-    label: 'Exports',
-    icon: Ship,
-    flyoutTitle: 'Exports',
-    items: [
-      { path: '/export-contracts', label: 'Export Contracts', icon: Ship },
-      { path: '/buyer-inspections', label: 'Buyer Inspections', icon: ShieldCheck },
-      { path: '/stock-report', label: 'Stock Report', icon: Boxes },
-      { path: '/bag-ledger', label: 'Bag Ledger', icon: Layers },
-      { path: '/materials-register', label: 'Materials Register', icon: Package },
-    ],
-  },
-  {
-    id: 'reports',
-    label: 'Reports',
-    icon: FileBarChart2,
-    flyoutTitle: 'Reports',
-    items: [
-      { path: '/reports', label: 'Summary Reports', icon: FileBarChart2 },
-      { path: '/purchase-orders-report', label: 'Purchase Orders', icon: ClipboardList },
-      { path: '/warehouse-receipt-report', label: 'Warehouse Report', icon: PackageCheck },
-      { path: '/user-report', label: 'User Activity', icon: Users },
-      { path: '/activity-log', label: 'Activity Log', icon: Activity },
-    ],
-  },
-  {
-    id: 'admin',
-    label: 'Settings',
-    icon: Database,
-    flyoutTitle: 'Settings',
-    items: [
-      { path: '/master-data', label: 'Master Data', icon: Database },
-      { path: '/permissions', label: 'Permissions', icon: Lock },
-      { path: '/users-management', label: 'Users & Roles', icon: Users },
-      { path: '/data-audit', label: 'Data Audit', icon: ShieldCheck },
-      { path: '/notification-settings', label: 'Notifications', icon: Bell },
-    ],
-  },
-];
+const ICONS = {
+  LayoutDashboard, ClipboardList, Ship, FileBarChart2, Database, Package, Layers,
+  BarChart3, ShieldCheck, Boxes, FlaskConical, Factory, PackageCheck, Activity,
+  Lock, Users, Bell, Scale, CalendarCheck, HandCoins, DatabaseBackup,
+};
+
+const MOBILE_GROUPS = NAV_GROUPS.map((group) => ({
+  ...group,
+  icon: ICONS[group.icon],
+  flyoutTitle: group.title,
+  items: group.items.map(([moduleKey, icon, label, path]) => ({
+    path: path || MODULES[moduleKey].path,
+    label: label || MODULES[moduleKey].label,
+    icon: ICONS[icon],
+  })),
+}));
 
 const RAIL_WIDTH = 104;
 const CLOSE_DELAY = 150;
@@ -88,7 +44,12 @@ function RailEntry({ group, isActive, isOpen, onMouseEnter, onMouseLeave, entryR
       {isActive && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full bg-[#B08D57]" />
       )}
-      <div
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-label={`Open ${group.flyoutTitle}`}
+        onFocus={onMouseEnter}
         className={cn(
           'flex flex-col items-center justify-center gap-1 py-4 w-full cursor-pointer transition-colors duration-150 select-none',
           isActive
@@ -102,7 +63,7 @@ function RailEntry({ group, isActive, isOpen, onMouseEnter, onMouseLeave, entryR
         <span className="text-[12px] font-semibold uppercase tracking-wide leading-tight text-center px-1">
           {group.label}
         </span>
-      </div>
+      </button>
     </div>
   );
 }
@@ -380,6 +341,9 @@ export default function Sidebar() {
           return (
             <button
               key={group.id}
+              type="button"
+              aria-expanded={drawerOpen}
+              aria-label={`Open ${group.flyoutTitle}`}
               onClick={() => setMobileDrawer(drawerOpen ? null : group.id)}
               className="flex flex-col items-center gap-1 flex-1"
             >
@@ -405,7 +369,9 @@ export default function Sidebar() {
             <div className="w-9 h-1 bg-[#B08D57]/25 rounded-full mx-auto mt-2.5" />
             <div className="flex items-center justify-between px-5 py-3">
               <h2 className="text-base font-bold text-gray-900">{activeDrawerGroup.flyoutTitle}</h2>
-              <button onClick={() => setMobileDrawer(null)} className="text-2xl text-gray-400">×</button>
+              <button type="button" onClick={() => setMobileDrawer(null)} className="p-1 text-gray-500" aria-label="Close navigation menu">
+                <X className="h-5 w-5" />
+              </button>
             </div>
             {activeDrawerGroup.items
               .filter(item => isItemAllowed(item.path))

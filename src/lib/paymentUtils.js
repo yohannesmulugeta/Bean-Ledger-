@@ -5,6 +5,7 @@
 
 export function parsePaymentHistory(record) {
   if (!record) return [];
+  if (Array.isArray(record.payment_history)) return record.payment_history;
   try {
     const parsed = JSON.parse(record.payment_history || '[]');
     return Array.isArray(parsed) ? parsed : [];
@@ -15,7 +16,11 @@ export function parsePaymentHistory(record) {
 
 /** Sum all payment amounts from payment_history JSON */
 export function calcTotalPaid(record) {
-  return parsePaymentHistory(record).reduce((s, p) => s + (parseFloat(p.amount_etb) || 0), 0);
+  const history = parsePaymentHistory(record);
+  if (history.length > 0 || record?.payment_history !== undefined) {
+    return history.reduce((s, p) => s + (parseFloat(p.amount_etb) || 0), 0);
+  }
+  return parseFloat(record?.total_paid_etb) || 0;
 }
 
 /** Compute balance: grand_total - totalPaid, floored to 0 if within ±1 ETB tolerance */

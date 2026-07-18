@@ -7,6 +7,9 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import ModuleRouteGuard from '@/components/ModuleRouteGuard';
 import Login from '@/pages/Login';
+import { ensureDemoDatasetVersion } from '@/services/demoStore';
+
+ensureDemoDatasetVersion();
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const MasterData = lazy(() => import('@/pages/MasterData'));
@@ -25,11 +28,14 @@ const BagLedger = lazy(() => import('@/pages/BagLedger.jsx'));
 const ActivityLog = lazy(() => import('@/pages/ActivityLog.jsx'));
 const NotificationHistory = lazy(() => import('@/pages/NotificationHistory.jsx'));
 const Permissions = lazy(() => import('@/pages/Permissions.jsx'));
-const UserActivityReport = lazy(() => import('@/pages/UserActivityReport'));
 const PurchaseOrdersReport = lazy(() => import('@/pages/PurchaseOrdersReport'));
 const WarehouseReceiptReport = lazy(() => import('@/pages/WarehouseReceiptReport'));
 const UsersManagement = lazy(() => import('@/pages/UsersManagement'));
 const DataAudit = lazy(() => import('@/pages/DataAudit'));
+const AdjustmentCenter = lazy(() => import('@/pages/AdjustmentCenter'));
+const YearClose = lazy(() => import('@/pages/YearClose'));
+const CommissionReport = lazy(() => import('@/pages/CommissionReport'));
+const BackupCenter = lazy(() => import('@/pages/BackupCenter'));
 
 const RouteLoadingFallback = () => (
   <div className="min-h-[50vh] flex items-center justify-center bg-background text-sm text-muted-foreground">
@@ -84,15 +90,20 @@ const AuthenticatedApp = () => {
         <Route path="/materials-register" element={protectedRoute("/materials-register", MaterialsRegister)} />
         <Route path="/bag-ledger" element={protectedRoute("/bag-ledger", BagLedger)} />
         <Route path="/stock-report" element={protectedRoute("/stock-report", StockReport)} />
-        <Route path="/notification-settings" element={<ModuleRouteGuard path="/notification-settings"><Suspense fallback={<RouteLoadingFallback />}><NotificationSettings /></Suspense></ModuleRouteGuard>} />
+        <Route path="/notification-settings" element={protectedRoute("/notification-settings", NotificationSettings)} />
         <Route path="/activity-log" element={protectedRoute("/activity-log", ActivityLog)} />
-        <Route path="/notification-history" element={<ModuleRouteGuard path="/notification-history"><Suspense fallback={<RouteLoadingFallback />}><NotificationHistory /></Suspense></ModuleRouteGuard>} />
+        <Route path="/notification-history" element={protectedRoute("/notification-history", NotificationHistory)} />
         <Route path="/permissions" element={protectedRoute("/permissions", Permissions)} />
-        <Route path="/user-report" element={protectedRoute("/user-report", UserActivityReport)} />
+        <Route path="/user-report" element={<Navigate to="/activity-log?view=users" replace />} />
         <Route path="/purchase-orders-report" element={protectedRoute("/purchase-orders-report", PurchaseOrdersReport)} />
         <Route path="/warehouse-receipt-report" element={protectedRoute("/warehouse-receipt-report", WarehouseReceiptReport)} />
         <Route path="/users-management" element={protectedRoute("/users-management", UsersManagement)} />
         <Route path="/data-audit" element={protectedRoute("/data-audit", DataAudit)} />
+        <Route path="/adjustment-center" element={protectedRoute("/adjustment-center", AdjustmentCenter)} />
+        <Route path="/year-close" element={protectedRoute("/year-close", YearClose)} />
+        <Route path="/supplier-remaining-explanation" element={<Navigate to="/stock-report?view=supplier-reconciliation" replace />} />
+        <Route path="/commission-report" element={protectedRoute("/commission-report", CommissionReport)} />
+        <Route path="/backup-center" element={protectedRoute("/backup-center", BackupCenter)} />
       </Route>
       <Route path="*" element={isAuthenticated ? <PageNotFound /> : <Navigate to="/login" replace />} />
     </Routes>
@@ -120,7 +131,7 @@ export default function App() {
 function AppContent() {
   return (
     <AuthProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthenticatedApp />
       </Router>
       <Toaster />

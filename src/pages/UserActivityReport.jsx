@@ -1,8 +1,6 @@
 // @ts-nocheck
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useRole } from '@/lib/role-hooks';
-import { Navigate } from 'react-router-dom';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,10 +12,7 @@ import UserDetailPanel from '@/components/userreport/UserDetailPanel';
 import { exportUserReportPDF, exportUserReportExcel } from '@/lib/userReportExport';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { auditService } from '@/services/auditService';
-import { purchaseService } from '@/services/purchaseService';
-import { warehouseService } from '@/services/warehouseService';
-import { processingService } from '@/services/processingService';
-import { outputService } from '@/services/outputService';
+import { reportService, REPORT_QUERY_KEYS } from '@/services/reportService';
 
 function getThisWeekRange() {
   const now = new Date();
@@ -26,9 +21,7 @@ function getThisWeekRange() {
   return { from, to };
 }
 
-export default function UserActivityReport() {
-  const { isAdmin } = useRole();
-
+export default function UserActivityReport({ embedded = false }) {
   const [dateRange, setDateRange] = useState(getThisWeekRange());
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -38,28 +31,17 @@ export default function UserActivityReport() {
     queryKey: ['activity-log'],
     queryFn: () => auditService.list(),
   });
-  const { data: purchases = [], isLoading: loadingPurchases } = useQuery({
-    queryKey: ['purchase-records'],
-    queryFn: () => purchaseService.list(),
+  const { data: snapshot = {}, isLoading: loadingSnapshot } = useQuery({
+    queryKey: REPORT_QUERY_KEYS.snapshot,
+    queryFn: () => reportService.snapshot(),
   });
-  const { data: receipts = [], isLoading: loadingReceipts } = useQuery({
-    queryKey: ['warehouse-receipts'],
-    queryFn: () => warehouseService.listReceipts(),
-  });
-  const { data: processingLogs = [], isLoading: loadingProcessing } = useQuery({
-    queryKey: ['processing-logs'],
-    queryFn: () => processingService.list(),
-  });
-  const { data: outputReports = [], isLoading: loadingOutput } = useQuery({
-    queryKey: ['output-reports'],
-    queryFn: () => outputService.list(),
-  });
-  const { data: users = [], isLoading: loadingUsers } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => Promise.resolve([{ id: 'demo-admin-local', email: 'demo-admin@kkgt.local', full_name: 'Demo Admin', role: 'admin' }]),
-  });
+  const purchases = snapshot.purchases || [];
+  const receipts = snapshot.receipts || [];
+  const processingLogs = snapshot.processingLogs || [];
+  const outputReports = snapshot.outputReports || [];
+  const users = [{ id: 'demo-admin-local', email: 'demo-admin@kkgt.local', full_name: 'Demo Admin', role: 'admin' }];
 
-  const isLoading = loadingActivity || loadingPurchases || loadingReceipts || loadingProcessing || loadingOutput || loadingUsers;
+  const isLoading = loadingActivity || loadingSnapshot;
 
   const { from, to } = dateRange;
 
@@ -211,20 +193,26 @@ export default function UserActivityReport() {
   const handleExportPDF = () => exportUserReportPDF({ filteredStats, summary, dateRange });
   const handleExportExcel = () => exportUserReportExcel({ filteredStats, purchases, receipts, processingLogs, outputReports, dateRange });
 
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
+  const exportActions = (
+    <>
+      <Button variant="outline" onClick={handleExportExcel} className="gap-2">
+        <FileSpreadsheet className="w-4 h-4" /> Export Excel
+      </Button>
+      <Button onClick={handleExportPDF} className="gap-2">
+        <Download className="w-4 h-4" /> Export PDF
+      </Button>
+    </>
+  );
 
   return (
     <div>
-      <PageHeader title="User Activity Report" description="Track what each staff member has done in the app">
-        <Button variant="outline" onClick={handleExportExcel} className="gap-2">
-          <FileSpreadsheet className="w-4 h-4" /> Export Excel
-        </Button>
-        <Button onClick={handleExportPDF} className="gap-2 bg-orange-600 hover:bg-orange-700 text-white">
-          <Download className="w-4 h-4" /> Export PDF
-        </Button>
-      </PageHeader>
+      {embedded ? (
+        <div className="mb-4 flex flex-wrap justify-end gap-2">{exportActions}</div>
+      ) : (
+        <PageHeader title="User Activity Analysis" description="Review staff activity and transaction workload">
+          {exportActions}
+        </PageHeader>
+      )}
 
       <ActivityDateFilter dateRange={dateRange} onChange={setDateRange} />
 

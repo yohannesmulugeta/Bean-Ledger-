@@ -351,7 +351,7 @@ export default function MasterData() {
   return (
     <RoleGuard allowedRoles={['admin']}>
     <div>
-      <PageHeader title="Master Data" description="Manage supplier records and opening stock">
+      <PageHeader title="Supplier & Reference Data" description="Manage suppliers, coffee classifications, and opening inventory">
         <div className="flex gap-2 flex-wrap">
           <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleImportFile} />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importing}>

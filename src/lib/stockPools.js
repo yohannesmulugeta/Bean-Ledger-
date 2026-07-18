@@ -13,7 +13,7 @@
  *   − Sum of ExportContract.export_kg where stock_pool === 'Recleaned'
  */
 
-export function computeStockPools({ outputReports = [], contracts = [], inspections = [], sampleLogs = [] }) {
+export function computeStockPools({ outputReports = [], contracts = [], inspections = [], sampleLogs = [], adjustments = [] }) {
   const freshOutput = {};
   const recleanedOutput = {};
   const additionalPool1ByType = {}; // Pool 1 KG drawn into recleaning entries
@@ -57,6 +57,15 @@ export function computeStockPools({ outputReports = [], contracts = [], inspecti
     }
   });
 
+  const freshAdjustments = {};
+  const recleanedAdjustments = {};
+  adjustments.filter(a => a?.archived !== true && !a?.archived_at && a.status === 'approved').forEach((adjustment) => {
+    const ct = adjustment.coffee_type;
+    if (!ct) return;
+    if (adjustment.target_type === 'Fresh') freshAdjustments[ct] = (freshAdjustments[ct] || 0) + Number(adjustment.quantity_kg || 0);
+    if (adjustment.target_type === 'Recleaned') recleanedAdjustments[ct] = (recleanedAdjustments[ct] || 0) + Number(adjustment.quantity_kg || 0);
+  });
+
   const allTypes = new Set([
     ...Object.keys(freshOutput),
     ...Object.keys(recleanedOutput),
@@ -65,6 +74,8 @@ export function computeStockPools({ outputReports = [], contracts = [], inspecti
     ...Object.keys(exportInspectionSamples),
     ...Object.keys(freshContracted),
     ...Object.keys(recleanedContracted),
+    ...Object.keys(freshAdjustments),
+    ...Object.keys(recleanedAdjustments),
   ]);
 
   const fresh = {};
@@ -76,11 +87,13 @@ export function computeStockPools({ outputReports = [], contracts = [], inspecti
     const fExpInspSample = exportInspectionSamples[ct] || 0;
     const fExported = freshContracted[ct] || 0;
     const fPool1UsedInRecleaning = additionalPool1ByType[ct] || 0;
-    const freshAvail = Math.max(0, fOutput - fInspSample - fExpInspSample - fExported - fPool1UsedInRecleaning);
+    const fAdjustment = freshAdjustments[ct] || 0;
+    const freshAvail = Math.max(0, fOutput - fInspSample - fExpInspSample - fExported - fPool1UsedInRecleaning + fAdjustment);
 
     const rOutput = recleanedOutput[ct] || 0;
     const rExported = recleanedContracted[ct] || 0;
-    const recleanedAvail = Math.max(0, rOutput - rExported);
+    const rAdjustment = recleanedAdjustments[ct] || 0;
+    const recleanedAvail = Math.max(0, rOutput - rExported + rAdjustment);
 
     fresh[ct] = freshAvail;
     recleaned[ct] = recleanedAvail;
@@ -90,9 +103,11 @@ export function computeStockPools({ outputReports = [], contracts = [], inspecti
       exportInspectionSamples: fExpInspSample,
       freshExported: fExported,
       pool1UsedInRecleaning: fPool1UsedInRecleaning,
+      freshAdjustment: fAdjustment,
       freshAvail,
       recleanedOutput: rOutput,
       recleanedExported: rExported,
+      recleanedAdjustment: rAdjustment,
       recleanedAvail,
     };
   });

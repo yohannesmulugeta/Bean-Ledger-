@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cacheGet, cacheSet } from '@/lib/offlineCache';
 
@@ -16,17 +17,20 @@ import { cacheGet, cacheSet } from '@/lib/offlineCache';
  */
 export function useOfflineQuery(cacheKey, queryConfig) {
   const { queryFn, ...rest } = queryConfig;
+  const cacheMeta = useRef({ fromCache: false, lastUpdated: null });
 
   const wrappedQueryFn = async () => {
     try {
       const data = await queryFn();
       // Cache successful result
       cacheSet(cacheKey, data);
+      cacheMeta.current = { fromCache: false, lastUpdated: Date.now() };
       return data;
     } catch (err) {
       // If fetch fails (e.g. offline), try cache
       const cached = cacheGet(cacheKey);
       if (cached.data) {
+        cacheMeta.current = { fromCache: true, lastUpdated: cached.lastUpdated };
         return cached.data;
       }
       // No cache fallback — rethrow original error
@@ -39,14 +43,8 @@ export function useOfflineQuery(cacheKey, queryConfig) {
     queryFn: wrappedQueryFn,
   });
 
-  // Determine if we loaded from cache
-  const cached = cacheGet(cacheKey);
-  const fromCache = result.isError && cached.data ? true : false;
-  const lastUpdated = cached.lastUpdated;
-
   return {
     ...result,
-    fromCache,
-    lastUpdated,
+    ...cacheMeta.current,
   };
 }

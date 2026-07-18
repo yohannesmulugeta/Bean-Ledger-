@@ -11,6 +11,7 @@ import { exportService } from './exportService';
 import { buyerInspectionService } from './buyerInspectionService';
 import { bagService } from './bagService';
 import { materialService } from './materialService';
+import { stockAdjustmentService } from './governanceService';
 
 export const REPORT_CACHE_KEYS = Object.freeze({
   snapshot: 'phase9-report-snapshot',
@@ -35,6 +36,7 @@ function decoratePurchase(record) {
   return {
     ...withArchiveFlag(record),
     created_date: record.created_date || record.created_at,
+    total_purchase_price: record.total_purchase_price ?? record.total_purchase_price_etb,
   };
 }
 
@@ -102,17 +104,19 @@ function decorateSnapshot(raw = {}) {
     outputReports: (raw.outputReports || []).map(decorateOutput).sort(byNewest('date')),
     exportContracts: (raw.exportContracts || []).map(decorateExport).sort(byNewest('export_date')),
     buyerInspections: (raw.buyerInspections || []).map(decorateInspection).sort(byNewest('inspection_date')),
+    stockAdjustments: (raw.stockAdjustments || []).map(withArchiveFlag).sort(byNewest('adjustment_date')),
     bagBalances: raw.bagBalances || [],
     materialBalances: raw.materialBalances || [],
   };
 }
 
 async function supabaseSnapshot() {
-  const { data, error } = await supabase.rpc('get_demo_report_snapshot', {
-    p_organization_id: DEMO_META.organizationId,
-  });
+  const [{ data, error }, stockAdjustments] = await Promise.all([
+    supabase.rpc('get_demo_report_snapshot', { p_organization_id: DEMO_META.organizationId }),
+    stockAdjustmentService.list(),
+  ]);
   if (error) throw error;
-  return decorateSnapshot(data || {});
+  return decorateSnapshot({ ...(data || {}), stockAdjustments });
 }
 
 async function serviceSnapshot({ includeArchived = true } = {}) {
@@ -127,6 +131,7 @@ async function serviceSnapshot({ includeArchived = true } = {}) {
     buyerInspections,
     bagBalances,
     materialBalances,
+    stockAdjustments,
   ] = await Promise.all([
     supplierService.list(),
     purchaseService.list(),
@@ -138,6 +143,7 @@ async function serviceSnapshot({ includeArchived = true } = {}) {
     buyerInspectionService.list({ includeArchived }),
     bagService.summary(),
     materialService.balance(),
+    stockAdjustmentService.list(),
   ]);
 
   return decorateSnapshot({
@@ -151,6 +157,7 @@ async function serviceSnapshot({ includeArchived = true } = {}) {
     buyerInspections,
     bagBalances,
     materialBalances,
+    stockAdjustments,
   });
 }
 
@@ -172,6 +179,7 @@ export const reportService = {
       outputReports: snapshot.outputReports.filter(active),
       exportContracts: snapshot.exportContracts.filter(active),
       buyerInspections: snapshot.buyerInspections.filter(active),
+      stockAdjustments: snapshot.stockAdjustments.filter(active),
     };
   },
 
@@ -187,6 +195,7 @@ export const reportService = {
       outputReports: snapshot.outputReports,
       exportContracts: snapshot.exportContracts,
       buyerInspections: snapshot.buyerInspections,
+      stockAdjustments: snapshot.stockAdjustments,
       bagReceipts: (store.bagReceipts || []).map(withArchiveFlag),
       rejectBagUsages: (store.rejectBagUsages || []).map(withArchiveFlag),
       supplierBagPayments: (store.supplierBagPayments || []).map(withArchiveFlag),

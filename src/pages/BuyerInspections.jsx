@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import RoleGuard from '@/components/RoleGuard';
 import AuditRecordBanner from '@/components/shared/AuditRecordBanner';
 import { computeStockPools } from '@/lib/stockPools';
+import { stockAdjustmentService } from '@/services/governanceService';
 import TablePagination from '@/components/shared/TablePagination';
 import ActiveFilters from '@/components/shared/ActiveFilters';
 import DemoDocumentsPanel from '@/components/attachments/DemoDocumentsPanel';
@@ -284,6 +285,7 @@ export default function BuyerInspections() {
     queryKey: ['sample-logs'],
     queryFn: () => sampleService.list(),
   });
+  const { data: stockAdjustments = [] } = useQuery({ queryKey: ['stock-adjustments'], queryFn: () => stockAdjustmentService.list() });
 
   const coffeeTypes = useMemo(() => {
     const types = new Set(suppliers.map(s => s.coffee_type).filter(Boolean));
@@ -291,8 +293,8 @@ export default function BuyerInspections() {
   }, [suppliers]);
 
   const { fresh: freshStock } = useMemo(
-    () => computeStockPools({ outputReports, contracts, inspections, sampleLogs }),
-    [outputReports, contracts, inspections, sampleLogs]
+    () => computeStockPools({ outputReports, contracts, inspections, sampleLogs, adjustments: stockAdjustments }),
+    [outputReports, contracts, inspections, sampleLogs, stockAdjustments]
   );
 
   const createMutation = useMutation({
@@ -377,7 +379,7 @@ export default function BuyerInspections() {
           }}
           onDismiss={() => { setAuditIssueTitle(''); setAuditRecordId(''); setAuditFound(null); }}
         />
-        <PageHeader title="Buyer Inspections" description="Track buyer inspector visits and pass/fail outcomes">
+        <PageHeader title="Buyer Quality Inspections" description="Track buyer inspection visits and quality outcomes">
           <Button onClick={() => { setEditRecord(null); setDialogOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" /> New Inspection
           </Button>

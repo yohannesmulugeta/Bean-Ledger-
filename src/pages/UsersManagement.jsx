@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 export default function UsersManagement() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Users & Roles" description="Demo-only admin surface" />
+      <PageHeader title="Users & Access" description="Demo user and role administration" />
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
         Demo login uses one local admin account only. Supabase Auth, real invitations, role assignment, and credential changes are not connected in this demo.

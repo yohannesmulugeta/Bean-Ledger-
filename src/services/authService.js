@@ -2,8 +2,8 @@ const DEMO_SESSION_KEY = 'kkgt_demo_session';
 const DEMO_USER = {
   id: 'demo-admin-local',
   username: 'admin',
-  email: 'demo-admin@kkgt.local',
-  full_name: 'Demo Admin',
+  email: 'demo-admin@beanledger.local',
+  full_name: 'Selamawit Bekele',
   role: 'admin',
   environment: 'demo',
 };

@@ -32,6 +32,7 @@ import TablePagination from '@/components/shared/TablePagination';
 import RichArchiveDialog from '@/components/shared/RichArchiveDialog';
 import ArchivedRecordsSection from '@/components/shared/ArchivedRecordsSection';
 import { computeAvailabilityBySupplier } from '@/lib/availabilityUtils';
+import { stockAdjustmentService } from '@/services/governanceService';
 import { logActivity, diffRecords } from '@/lib/activityLogger';
 
 // PAGE_SIZE replaced by dynamic pageSize state
@@ -421,6 +422,7 @@ export default function SampleLogPage() {
     queryKey: ['buyer-inspections'],
     queryFn: () => buyerInspectionService.list(),
   });
+  const { data: stockAdjustments = [] } = useQuery({ queryKey: ['stock-adjustments'], queryFn: () => stockAdjustmentService.list() });
 
   const coffeeTypes = useMemo(() => {
     const t = new Set(suppliers.map(s => s.coffee_type).filter(Boolean));
@@ -428,17 +430,17 @@ export default function SampleLogPage() {
   }, [suppliers]);
 
   const { fresh: freshStockByType } = useMemo(
-    () => computeStockPools({ outputReports, contracts, inspections, sampleLogs: logs }),
-    [outputReports, contracts, inspections, logs]
+    () => computeStockPools({ outputReports, contracts, inspections, sampleLogs: logs, adjustments: stockAdjustments }),
+    [outputReports, contracts, inspections, logs, stockAdjustments]
   );
 
   const availableBySupplier = useMemo(() => {
-    const raw = computeAvailabilityBySupplier({ receipts, purchases, sampleLogs: logs, processingLogs });
+    const raw = computeAvailabilityBySupplier({ receipts, purchases, sampleLogs: logs, processingLogs, adjustments: stockAdjustments });
     // Return flat map: supplierName -> availableKg
     const result = {};
     Object.entries(raw).forEach(([name, v]) => { result[name] = v.availableKg; });
     return result;
-  }, [receipts, logs, processingLogs]);
+  }, [receipts, purchases, logs, processingLogs, stockAdjustments]);
 
   const createMutation = useMutation({
     mutationFn: data => sampleService.create(data),
@@ -516,7 +518,7 @@ export default function SampleLogPage() {
         }}
         onDismiss={() => { setAuditIssueTitle(''); setAuditRecordId(''); setAuditFound(null); }}
       />
-      <PageHeader title="Sample Log" description="Track coffee samples taken from warehouse">
+      <PageHeader title="Quality Sample Register" description="Record coffee samples issued from warehouse inventory">
         <Button onClick={() => { setEditRecord(null); setDialogOpen(true); }}>
           <Plus className="w-4 h-4 mr-1" /> New Entry
         </Button>

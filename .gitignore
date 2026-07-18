@@ -42,3 +42,4 @@ supabase/.branches/
 supabase/.temp/
 
 .vercel
+.playwright-cli/
