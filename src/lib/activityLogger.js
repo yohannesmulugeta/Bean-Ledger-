@@ -30,7 +30,7 @@ export async function logActivity({
       organization_id: DEMO_META.organizationId,
       profile_id: DEMO_META.profileId,
       is_demo: true,
-      user_email: 'demo-admin@kkgt.local',
+      user_email: 'demo-admin@beanledger.local',
       action_type,
       screen_name,
       entity_table: entity_type || 'demo_records',

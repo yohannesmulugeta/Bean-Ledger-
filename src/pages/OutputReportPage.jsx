@@ -27,6 +27,7 @@ import { InlineWarningList } from '@/components/notifications/InlineWarning';
 import { getOutputWarnings } from '@/lib/formWarnings';
 import NumberInput from '@/components/shared/NumberInput';
 import { computeStockPools } from '@/lib/stockPools';
+import { stockAdjustmentService } from '@/services/governanceService';
 import TablePagination from '@/components/shared/TablePagination';
 import ExportBar from '@/components/shared/ExportBar';
 import { exportPDF, exportXLSX } from '@/lib/exportUtils';
@@ -544,12 +545,13 @@ export default function OutputReportPage() {
     queryKey: ['sample-logs'],
     queryFn: () => sampleService.list(),
   });
+  const { data: stockAdjustments = [] } = useQuery({ queryKey: ['stock-adjustments'], queryFn: () => stockAdjustmentService.list() });
 
   // Compute live Pool 1 availability per coffee type for form validation
   const pool1ByCoffeeType = useMemo(() => {
-    const { fresh } = computeStockPools({ outputReports: reports, contracts, inspections, sampleLogs });
+    const { fresh } = computeStockPools({ outputReports: reports, contracts, inspections, sampleLogs, adjustments: stockAdjustments });
     return fresh;
-  }, [reports, contracts, inspections, sampleLogs]);
+  }, [reports, contracts, inspections, sampleLogs, stockAdjustments]);
 
   const createMutation = useMutation({
     mutationFn: data => outputService.create(data),
@@ -643,7 +645,7 @@ export default function OutputReportPage() {
           }}
           onDismiss={() => { setAuditIssueTitle(''); setAuditRecordId(''); setAuditFound(null); }}
         />
-        <PageHeader title="Output Report" description="Daily processing output by supplier and coffee type">
+        <PageHeader title="Processing Yield Report" description="Daily processing output by supplier and coffee type">
           <Button onClick={() => { setEditRecord(null); setDialogOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" /> New Report
           </Button>

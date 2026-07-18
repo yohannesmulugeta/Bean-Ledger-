@@ -1,32 +1,7 @@
 import React from 'react';
 import { usePermission } from '@/lib/role-hooks';
 import AccessDenied from '@/components/AccessDenied';
-
-// Maps route paths to module keys for can_view enforcement
-const ROUTE_TO_MODULE = {
-  '/': 'dashboard',
-  '/purchase-registration': 'purchase_registration',
-  '/warehouse-receipt': 'warehouse_receipt',
-  '/sample-log': 'sample_log',
-  '/processing-log': 'processing_log',
-  '/output-report': 'output_report',
-  '/export-contracts': 'export_contracts',
-  '/buyer-inspections': 'buyer_inspections',
-  '/stock-report': 'stock_report',
-  '/materials-register': 'materials_register',
-  '/bag-ledger': 'bag_ledger',
-  '/reports': 'reports',
-  '/purchase-orders-report': 'purchase_orders_report',
-  '/warehouse-receipt-report': 'warehouse_receipt_report',
-  '/user-report': 'user_activity_report',
-  '/activity-log': 'activity_log',
-  '/notification-history': 'notification_history',
-  '/notification-settings': 'notification_settings',
-  '/master-data': 'master_data',
-  '/users-management': 'users_roles',
-  '/data-audit': 'data_audit',
-  '/permissions': 'users_roles',
-};
+import { ROUTE_TO_MODULE } from '@/lib/appModules';
 
 export default function ModuleRouteGuard({ children, path }) {
   const { isAdmin, isSupervisor, canManageUsers, canManagePermissions } = usePermission();

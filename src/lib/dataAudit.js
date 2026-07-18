@@ -78,7 +78,10 @@ const pct = (n) => n == null ? '—' : `${Number(n).toFixed(1)}%`;
 
 function parseNum(v) { if (v == null || v === '') return 0; const s = String(v).replace(/,/g, ''); const n = parseFloat(s); return isNaN(n) ? 0 : n; }
 
-function parseJson(str) { try { return JSON.parse(str || '[]'); } catch { return []; } }
+function parseJson(value) {
+  if (Array.isArray(value)) return value;
+  try { return JSON.parse(value || '[]'); } catch { return []; }
+}
 
 function sumAdditionalCosts(record) {
   return parseJson(record.additional_costs).reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
@@ -94,10 +97,11 @@ function isNegative(v) { return parseNum(v) < -TOLERANCE_ETB; }
 
 function isZero(v) { return Math.abs(parseNum(v)) < 0.001; }
 
-function calcPurchaseGrandTotal(kg, unitPrice, commPct, costsTotal) {
-  if (!kg || kg <= 0) return null;
-  const feresula = kg / FERESULA;
-  return (unitPrice * feresula) + (unitPrice * feresula * commPct / 100) + costsTotal;
+function calcPurchaseGrandTotal(dispatchKg, warehouseKg, unitPrice, commPct, costsTotal) {
+  if (!dispatchKg || dispatchKg <= 0) return null;
+  const dispatchFeresula = dispatchKg / FERESULA;
+  const warehouseFeresula = (warehouseKg || dispatchKg) / FERESULA;
+  return (unitPrice * dispatchFeresula) + (unitPrice * warehouseFeresula * commPct / 100) + costsTotal;
 }
 
 function calcBalance(grandTotal, totalPaid) {
@@ -253,7 +257,7 @@ export default function runDataAudit(data) {
       if (savedGrand > 0 && unitPrice > 0) {
         // When warehouse receipt exists, grand total MUST use warehouse KG
         if (warehouseKg > 0) {
-          const expectedGrand = calcPurchaseGrandTotal(warehouseKg, unitPrice, commPct, costsTotal);
+          const expectedGrand = calcPurchaseGrandTotal(dispatchKg, warehouseKg, unitPrice, commPct, costsTotal);
           const diff = Math.abs(expectedGrand - savedGrand);
           if (diff > TOLERANCE_ETB) {
             results.push(issue('warning', 'Finance', 'Purchase Registration',
@@ -268,7 +272,7 @@ export default function runDataAudit(data) {
         } else {
           // No warehouse receipt yet — grand total can use dispatch KG, but inform the user
           if (dispatchKg > 0) {
-            const expectedGrand = calcPurchaseGrandTotal(dispatchKg, unitPrice, commPct, costsTotal);
+            const expectedGrand = calcPurchaseGrandTotal(dispatchKg, dispatchKg, unitPrice, commPct, costsTotal);
             const diff = Math.abs(expectedGrand - savedGrand);
             if (diff > TOLERANCE_ETB) {
               results.push(issue('warning', 'Finance', 'Purchase Registration',
@@ -568,7 +572,7 @@ export default function runDataAudit(data) {
 
   // 3c. Zero KG sent
   apl.forEach(pl => {
-    const kg = parseNum(pl.kg_sent) || parseNum(pl.bags_sent) * REJECT_BAG_KG;
+    const kg = parseNum(pl.kg_sent) || parseNum(pl.actual_weighed_kg) || parseNum(pl.bags_sent) * REJECT_BAG_KG;
     if (kg <= 0) {
       results.push(issue('warning', 'Data Quality', 'Processing Log',
         'Zero KG sent for processing',

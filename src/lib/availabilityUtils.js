@@ -17,8 +17,8 @@
  *
  * Returns a map: { [supplierName]: { netCoffeeKg, samplesKg, processedKg, availableKg } }
  */
-export function computeAvailabilityBySupplier({ receipts = [], purchases = [], sampleLogs = [], processingLogs = [] }) {
-  const notArchived = (x) => x?.archived !== true;
+export function computeAvailabilityBySupplier({ receipts = [], purchases = [], sampleLogs = [], processingLogs = [], adjustments = [] }) {
+  const notArchived = (x) => x?.archived !== true && !x?.archived_at;
 
   // Build a set of active (non-archived) purchase coffee_codes + ids
   const activePurchaseCodes = new Set();
@@ -75,11 +75,18 @@ export function computeAvailabilityBySupplier({ receipts = [], purchases = [], s
     }
   });
 
+  const adjustmentMap = {};
+  adjustments.filter(notArchived).forEach((adjustment) => {
+    if (adjustment.status !== 'approved' || adjustment.target_type !== 'supplier' || !adjustment.supplier_name) return;
+    adjustmentMap[adjustment.supplier_name] = (adjustmentMap[adjustment.supplier_name] || 0) + Number(adjustment.quantity_kg || 0);
+  });
+
   // --- Build result map for every supplier that has at least a receipt ---
   const allNames = new Set([
     ...Object.keys(netCoffeeMap),
     ...Object.keys(samplesMap),
     ...Object.keys(procMap),
+    ...Object.keys(adjustmentMap),
   ]);
 
   const result = {};
@@ -87,8 +94,10 @@ export function computeAvailabilityBySupplier({ receipts = [], purchases = [], s
     const netCoffeeKg = netCoffeeMap[name] || 0;
     const samplesKg = samplesMap[name] || 0;
     const processedKg = procMap[name] || 0;
-    const availableKg = Math.max(0, netCoffeeKg - samplesKg - processedKg);
-    result[name] = { netCoffeeKg, samplesKg, processedKg, availableKg };
+    const adjustmentKg = adjustmentMap[name] || 0;
+    const calculatedKg = netCoffeeKg - samplesKg - processedKg + adjustmentKg;
+    const availableKg = Math.max(0, calculatedKg);
+    result[name] = { netCoffeeKg, samplesKg, processedKg, adjustmentKg, calculatedKg, availableKg };
   });
 
   return result;

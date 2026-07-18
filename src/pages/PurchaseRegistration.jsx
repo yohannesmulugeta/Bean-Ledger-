@@ -664,7 +664,7 @@ export default function PurchaseRegistration() {
         }}
         onDismiss={() => { setAuditIssueTitle(''); setAuditRecordId(''); setAuditFound(null); }}
       />
-      <PageHeader title="Purchase Registration" description="Record and manage coffee purchases">
+      <PageHeader title="Coffee Purchase Intake" description="Record and manage supplier coffee purchases">
         <Button onClick={() => { setEditRecord(null); setDialogOpen(true); }} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Plus className="w-4 h-4 mr-1" /> New Purchase
         </Button>

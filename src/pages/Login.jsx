@@ -34,7 +34,7 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="KKGT Flow Demo Login"
+      title="BeanLedger Export PLC"
       subtitle="Demo Environment - synthetic data only"
       footer={null}
     >

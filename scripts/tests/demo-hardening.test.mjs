@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { authService } from '../../src/services/authService.js';
 import { seedNotifications, seedNotificationPreferences } from '../../src/services/demoData.js';
+import { readSupabaseJwtRole } from '../../src/lib/supabaseClient.js';
 
 function read(path) {
   return readFileSync(path, 'utf8');
@@ -27,12 +28,12 @@ assert.equal(await authService.isAuthenticated(), false, 'demo logout clears loc
 
 const app = read('src/App.jsx');
 assert.match(app, /isAuthenticated \? <AppLayout \/> : <Navigate to="\/login" replace \/>/, 'protected route tree redirects to login');
-assert.match(app, /path="\/notification-settings" element={<ModuleRouteGuard/, 'notification settings route is protected');
-assert.match(app, /path="\/notification-history" element={<ModuleRouteGuard/, 'notification history route is protected');
+assert.match(app, /path="\/notification-settings" element={protectedRoute\("\/notification-settings", NotificationSettings\)}/, 'notification settings route is protected');
+assert.match(app, /path="\/notification-history" element={protectedRoute\("\/notification-history", NotificationHistory\)}/, 'notification history route is protected');
 
 assert.equal(seedNotifications.every((item) => item.is_demo), true, 'notification seeds are demo flagged');
-assert.equal(seedNotifications.filter((item) => !item.archived_at).length, 3, 'archived demo notifications are filterable');
-assert.equal(seedNotifications.filter((item) => !item.read_at && !item.archived_at).length, 2, 'unread notification seed exists');
+assert.equal(seedNotifications.filter((item) => !item.archived_at).length, 8, 'all seeded notifications are active');
+assert.equal(seedNotifications.filter((item) => !item.read_at && !item.archived_at).length, 3, 'unread notification seeds exist');
 assert.deepEqual(seedNotificationPreferences[0].disabled_types, [], 'demo preferences start enabled');
 
 const notificationService = read('src/services/notificationService.js');
@@ -47,12 +48,14 @@ assert.match(settingsPage, /Credentials cannot be changed from this screen/, 'se
 assert.doesNotMatch(settingsPage, /@\/api\/base44Client|base44\.entities/, 'notification settings page does not call Base44');
 
 const backupButton = read('src/components/admin/DownloadBackupButton.jsx');
-assert.match(backupButton, /Real Base44 export is not connected in this demo\./, 'backup UI shows required disabled message');
+assert.match(backupButton, /\/backup-center/, 'backup UI routes to the safe Backup Center');
 assert.doesNotMatch(backupButton, /base44\.entities|CreateFileSignedUrl|Download Full Backup/, 'backup UI cannot run legacy Base44 export');
 
 const supabaseClient = read('src/lib/supabaseClient.js');
 assert.match(supabaseClient, /frontendEnvValidation/, 'frontend environment validation is exported');
 assert.match(supabaseClient, /service-role credentials/, 'service-role warning is present');
+const serviceRolePayload = Buffer.from(JSON.stringify({ role: 'service_role' })).toString('base64url');
+assert.equal(readSupabaseJwtRole(`header.${serviceRolePayload}.signature`), 'service_role', 'encoded service-role JWT is detected');
 
 assert.ok(existsSync('vercel.json'), 'vercel.json exists');
 const vercel = JSON.parse(read('vercel.json'));
@@ -97,6 +100,11 @@ const demoPathFiles = [
   'src/pages/Permissions.jsx',
   'src/pages/UsersManagement.jsx',
   'src/pages/UserActivityReport.jsx',
+  'src/pages/AdjustmentCenter.jsx',
+  'src/pages/YearClose.jsx',
+  'src/pages/SupplierRemainingExplanation.jsx',
+  'src/pages/CommissionReport.jsx',
+  'src/pages/BackupCenter.jsx',
 ];
 const activeBase44Hits = demoPathFiles.flatMap((file) => {
   const text = read(file);
@@ -109,5 +117,22 @@ const migrations = read('supabase/migrations/202606180010_phase11_notifications_
   assert.ok(migrations.includes(token), `${token} exists in Phase 11 migration`);
 });
 assert.doesNotMatch(migrations, /service_role/i, 'Phase 11 migration does not reference service role');
+
+const operationalAccess = read('supabase/migrations/20260718114156_demo_anon_operational_access.sql');
+[
+  'warehouse_receipts',
+  'sample_logs',
+  'processing_logs',
+  'output_reports',
+  'export_contracts',
+  'buyer_inspections',
+  'bag_receipts',
+  'material_register_entries',
+].forEach((table) => {
+  assert.ok(operationalAccess.includes(`'${table}'`), `${table} is visible to the demo client`);
+});
+assert.match(operationalAccess, /grant select on table public\.%I to anon/, 'operational access is read-only');
+assert.match(operationalAccess, /is_demo = true/, 'operational access only permits synthetic records');
+assert.match(operationalAccess, /11111111-1111-4111-8111-111111111111/, 'operational access is limited to the fixed demo organization');
 
 console.log('Phase 11 demo hardening tests passed');

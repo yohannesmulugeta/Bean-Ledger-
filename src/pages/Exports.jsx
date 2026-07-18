@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const fmt = (n) => (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtInt = (n) => (n ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-function KpiCard({ label, value, sub, color = 'text-foreground', icon: Icon, iconColor }) {
+function KpiCard({ label, value, sub = null, color = 'text-foreground', icon: Icon, iconColor }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 flex items-start gap-4">
       {Icon && (

@@ -22,6 +22,10 @@
     "test:phase10": "node scripts/tests/attachment-workflow.test.mjs",
     "test:phase11": "node scripts/tests/demo-hardening.test.mjs",
     "test:phase12": "node scripts/tests/vercel-preview-prep.test.mjs",
+    "test:phase13": "node scripts/tests/governance-workflow.test.mjs",
+    "test:demo-data": "node scripts/tests/demo-dataset.test.mjs",
+    "demo:seed:generate": "node scripts/generate-demo-seed.mjs",
+    "demo:seed:check": "node scripts/generate-demo-seed.mjs --check",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview"
   },

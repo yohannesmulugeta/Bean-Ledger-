@@ -1,419 +1,106 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adjustmentService } from '@/services/adjustmentService';
-import { format } from 'date-fns';
-import { Plus, ArrowUpCircle, ArrowDownCircle, RotateCcw, Scale, AlertTriangle } from 'lucide-react';
+// @ts-nocheck
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
+import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import PageHeader from '@/components/shared/PageHeader';
-import { useRole } from '@/lib/role-hooks';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { reportService, REPORT_QUERY_KEYS } from '@/services/reportService';
+import { stockAdjustmentService } from '@/services/governanceService';
+import { usePermission } from '@/lib/role-hooks';
+import ReasonDialog from '@/components/shared/ReasonDialog';
 
-const fmt = (n) => (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtInt = (n) => (n ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
-
-const AREAS = [
-  { value: 'supplier_unprocessed', label: 'Supplier Unprocessed' },
-  { value: 'processed_exportable', label: 'Processed-Exportable' },
-  { value: 'export_materials', label: 'Export Materials' },
-  { value: 'bag_ledger', label: 'Bag Ledger' },
-];
-
-const REASONS = [
-  'Physical count correction',
-  'Loss/damage',
-  'Data entry correction',
-  'Found stock',
-  'Other',
-];
-
-const UNITS = ['kg', 'bags'];
-
-function KpiCard({ label, value, sub, color = 'text-foreground', icon: Icon, iconColor }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 flex items-start gap-4">
-      {Icon && (
-        <div className={`mt-0.5 p-2 rounded-lg ${iconColor || 'bg-muted'}`}>
-          <Icon className="w-5 h-5" />
-        </div>
-      )}
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{label}</p>
-        <p className={`text-2xl font-bold ${color}`}>{value}</p>
-        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function DirectionBadge({ direction }) {
-  const isIncrease = direction === 'increase';
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
-      isIncrease
-        ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-        : 'bg-red-100 text-red-700 border-red-200'
-    }`}>
-      {isIncrease ? <ArrowUpCircle className="w-3 h-3" /> : <ArrowDownCircle className="w-3 h-3" />}
-      {isIncrease ? 'Increase' : 'Decrease'}
-    </span>
-  );
-}
-
-function ReversedBadge({ reversed }) {
-  if (!reversed) return null;
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border bg-orange-100 text-orange-700 border-orange-200">
-      <RotateCcw className="w-3 h-3" />
-      Reversed
-    </span>
-  );
-}
-
-const INITIAL_FORM = {
-  adjustment_area: '',
-  direction: 'increase',
-  quantity: '',
-  unit: 'kg',
-  reason: '',
-  note: '',
-};
+const today = () => new Date().toISOString().slice(0, 10);
+const initialForm = { adjustment_date: today(), target_type: 'supplier', direction: 'increase', kg: '', supplier_id: '', coffee_type: '', reason: '', notes: '' };
+const fmt = (value) => Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 3 });
 
 export default function AdjustmentCenter() {
-  const { role, isAdmin, isSupervisor, isAdminOrSupervisor, user } = useRole();
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState(INITIAL_FORM);
-  const [currentBalance, setCurrentBalance] = useState(null);
+  const { canPerform } = usePermission();
+  const canWrite = canPerform('adjustment_center', 'can_create');
+  const [form, setForm] = useState(initialForm);
+  const [reversing, setReversing] = useState(null);
+  const { data: adjustments = [], isLoading } = useQuery({ queryKey: ['stock-adjustments'], queryFn: () => stockAdjustmentService.list() });
+  const { data: snapshot = {} } = useQuery({ queryKey: REPORT_QUERY_KEYS.snapshot, queryFn: () => reportService.snapshot() });
+  const suppliers = snapshot.suppliers || [];
+  const coffeeTypes = useMemo(() => Array.from(new Set([
+    ...suppliers.map((row) => row.coffee_type),
+    ...(snapshot.outputReports || []).map((row) => row.coffee_type),
+  ].filter(Boolean))).sort(), [suppliers, snapshot.outputReports]);
 
-  const canAccess = ['admin', 'supervisor'].includes(role);
-
-  const { data: adjustments = [], isLoading } = useQuery({
-    queryKey: ['stockAdjustments'],
-    queryFn: () => adjustmentService.list(),
-    staleTime: 60000,
-  });
-
-  // Fetch current balance when area changes
-  useEffect(() => {
-    if (form.adjustment_area) {
-      adjustmentService.getCurrentBalance(form.adjustment_area).then(setCurrentBalance);
-    } else {
-      setCurrentBalance(null);
-    }
-  }, [form.adjustment_area, adjustments]);
+  const refresh = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['stock-adjustments'] }),
+    queryClient.invalidateQueries({ queryKey: REPORT_QUERY_KEYS.snapshot }),
+  ]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => adjustmentService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockAdjustments'] });
-      setDialogOpen(false);
-      setForm(INITIAL_FORM);
+    mutationFn: () => {
+      const supplier = suppliers.find((row) => row.id === form.supplier_id);
+      return stockAdjustmentService.create({
+        adjustment_no: `BL-ADJ-${new Date().getFullYear()}-${String(adjustments.length + 1).padStart(3, '0')}`,
+        adjustment_date: form.adjustment_date,
+        target_type: form.target_type,
+        supplier_id: supplier?.id,
+        supplier_name: supplier?.supplier_name,
+        coffee_type: form.target_type === 'supplier' ? supplier?.coffee_type : form.coffee_type,
+        quantity_kg: Number(form.kg) * (form.direction === 'decrease' ? -1 : 1),
+        reason: form.reason,
+        notes: form.notes,
+      });
     },
+    onSuccess: async () => { await refresh(); setForm(initialForm); toast.success('Stock adjustment approved'); },
+    onError: (error) => toast.error(error.message || 'Adjustment failed'),
   });
 
   const reverseMutation = useMutation({
-    mutationFn: (id) => adjustmentService.reverse(id, user?.full_name || 'Demo Admin'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stockAdjustments'] });
-    },
+    mutationFn: ({ id, reason }) => stockAdjustmentService.reverse(id, reason),
+    onSuccess: async () => { await refresh(); setReversing(null); toast.success('Adjustment reversed'); },
+    onError: (error) => toast.error(error.message || 'Reversal failed'),
   });
 
-  const kpis = useMemo(() => {
-    const total = adjustments.length;
-    const netIncrease = adjustments
-      .filter((a) => a.direction === 'increase' && !a.reversed)
-      .reduce((s, a) => s + Number(a.quantity || 0), 0);
-    const netDecrease = adjustments
-      .filter((a) => a.direction === 'decrease' && !a.reversed)
-      .reduce((s, a) => s + Number(a.quantity || 0), 0);
-    const reversedCount = adjustments.filter((a) => a.reversed).length;
-    return { total, netIncrease, netDecrease, reversedCount };
-  }, [adjustments]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.adjustment_area || !form.quantity || !form.reason) return;
-    if (form.reason === 'Other' && !form.note.trim()) return;
-
-    const qty = Number(form.quantity);
-    const balanceBefore = currentBalance ?? 0;
-    const balanceAfter = form.direction === 'increase' ? balanceBefore + qty : balanceBefore - qty;
-
-    createMutation.mutate({
-      ...form,
-      quantity: qty,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      created_by: user?.full_name || 'Demo Admin',
-      adjustment_date: new Date().toISOString().slice(0, 10),
-    });
-  };
-
-  const areaLabel = (key) => AREAS.find((a) => a.value === key)?.label || key;
-
-  if (!canAccess) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <AlertTriangle className="w-12 h-12 text-amber-500 mb-4" />
-        <h2 className="text-lg font-semibold text-foreground mb-2">Access Restricted</h2>
-        <p className="text-sm text-muted-foreground max-w-md">
-          The Adjustment Center is only available to Admin and Supervisor roles.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <PageHeader title="Adjustment Center" description="Manual stock corrections with full audit trail">
-        <Button onClick={() => { setForm(INITIAL_FORM); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> New Adjustment
-        </Button>
-      </PageHeader>
+    <div>
+      <PageHeader title="Inventory Adjustments" description="Approved inventory corrections and reversal history" />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoading ? (
-          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
-        ) : (
-          <>
-            <KpiCard label="Total Adjustments" value={fmtInt(kpis.total)} sub="all records"
-              icon={Scale} iconColor="bg-blue-50 text-blue-600" />
-            <KpiCard label="Net Increase" value={`${fmtInt(kpis.netIncrease)} kg`}
-              icon={ArrowUpCircle} iconColor="bg-emerald-50 text-emerald-600" color="text-emerald-700" />
-            <KpiCard label="Net Decrease" value={`${fmtInt(kpis.netDecrease)} kg`}
-              icon={ArrowDownCircle} iconColor="bg-red-50 text-red-500" color="text-red-600" />
-            <KpiCard label="Reversed" value={fmtInt(kpis.reversedCount)} sub="reversed adjustments"
-              icon={RotateCcw} iconColor="bg-orange-50 text-orange-600" color="text-orange-600" />
-          </>
-        )}
-      </div>
-
-      {/* Adjustment History Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                {['Date', 'Area', 'Direction', 'Quantity', 'Unit', 'Reason', 'Created By', 'Balance Change', 'Status', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array(5).fill(0).map((_, i) => (
-                  <tr key={i} className="border-b border-border">
-                    {Array(10).fill(0).map((__, j) => <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>)}
-                  </tr>
-                ))
-              ) : adjustments.length === 0 ? (
-                <tr><td colSpan={10} className="text-center py-12 text-muted-foreground">
-                  No adjustments recorded yet. Click "New Adjustment" to create one.
-                </td></tr>
-              ) : adjustments.map((a, idx) => (
-                <tr
-                  key={a.id}
-                  className={`border-b border-border hover:bg-muted/30 ${idx % 2 !== 0 ? 'bg-muted/10' : ''} ${a.reversed ? 'opacity-60' : ''}`}
-                >
-                  <td className={`px-4 py-3 text-xs whitespace-nowrap ${a.reversed ? 'line-through' : ''}`}>
-                    {a.adjustment_date ? format(new Date(a.adjustment_date), 'd MMM yyyy') : '—'}
-                  </td>
-                  <td className={`px-4 py-3 text-xs font-medium whitespace-nowrap ${a.reversed ? 'line-through' : ''}`}>
-                    {areaLabel(a.adjustment_area)}
-                  </td>
-                  <td className="px-4 py-3"><DirectionBadge direction={a.direction} /></td>
-                  <td className={`px-4 py-3 text-xs text-right font-semibold ${a.reversed ? 'line-through' : ''}`}>
-                    {fmtInt(a.quantity)}
-                  </td>
-                  <td className={`px-4 py-3 text-xs ${a.reversed ? 'line-through' : ''}`}>{a.unit || 'kg'}</td>
-                  <td className={`px-4 py-3 text-xs text-muted-foreground ${a.reversed ? 'line-through' : ''}`}>
-                    {a.reason || '—'}
-                  </td>
-                  <td className="px-4 py-3 text-xs whitespace-nowrap">{a.created_by || '—'}</td>
-                  <td className="px-4 py-3 text-xs whitespace-nowrap font-mono">
-                    <span className="text-muted-foreground">{fmtInt(a.balance_before)}</span>
-                    <span className="mx-1 text-muted-foreground">→</span>
-                    <span className="font-semibold">{fmtInt(a.balance_after)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <ReversedBadge reversed={a.reversed} />
-                    {a.reversal_of_adjustment_id && !a.reversed && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border bg-blue-100 text-blue-700 border-blue-200">
-                        Reversal
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {!a.reversed && !a.reversal_of_adjustment_id && isAdminOrSupervisor && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                        onClick={() => reverseMutation.mutate(a.id)}
-                        disabled={reverseMutation.isPending}
-                      >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reverse
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {canWrite && <form className="mb-6 border-y border-border bg-muted/20 py-5" onSubmit={(event) => { event.preventDefault(); createMutation.mutate(); }}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="space-y-1.5"><Label>Date</Label><Input type="date" value={form.adjustment_date} onChange={(e) => setForm({ ...form, adjustment_date: e.target.value })} required /></div>
+          <div className="space-y-1.5"><Label>Stock target</Label><Select value={form.target_type} onValueChange={(value) => setForm({ ...form, target_type: value, supplier_id: '', coffee_type: '' })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="supplier">Supplier remaining</SelectItem><SelectItem value="Fresh">Fresh export stock</SelectItem><SelectItem value="Recleaned">Recleaned stock</SelectItem><SelectItem value="Reject">Reject stock</SelectItem></SelectContent></Select></div>
+          {form.target_type === 'supplier' ? (
+            <div className="space-y-1.5"><Label>Supplier</Label><Select value={form.supplier_id} onValueChange={(value) => setForm({ ...form, supplier_id: value })}><SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger><SelectContent>{suppliers.filter((row) => !row.archived).map((row) => <SelectItem key={row.id} value={row.id}>{row.supplier_name}</SelectItem>)}</SelectContent></Select></div>
+          ) : (
+            <div className="space-y-1.5"><Label>Coffee type</Label><Select value={form.coffee_type} onValueChange={(value) => setForm({ ...form, coffee_type: value })}><SelectTrigger><SelectValue placeholder="Select coffee type" /></SelectTrigger><SelectContent>{coffeeTypes.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select></div>
+          )}
+          <div className="grid grid-cols-[1fr_1.2fr] gap-2"><div className="space-y-1.5"><Label>Direction</Label><Select value={form.direction} onValueChange={(value) => setForm({ ...form, direction: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="increase">Increase</SelectItem><SelectItem value="decrease">Decrease</SelectItem></SelectContent></Select></div><div className="space-y-1.5"><Label>KG</Label><Input type="number" min="0.001" step="0.001" value={form.kg} onChange={(e) => setForm({ ...form, kg: e.target.value })} required /></div></div>
+          <div className="space-y-1.5 xl:col-span-2"><Label>Reason</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Scale reconciliation, physical count..." required /></div>
+          <div className="space-y-1.5 xl:col-span-2"><Label>Notes</Label><Textarea rows={1} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
         </div>
+        <div className="mt-4 flex justify-end"><Button type="submit" disabled={createMutation.isPending} className="gap-2"><Plus className="h-4 w-4" />Approve adjustment</Button></div>
+      </form>}
+
+      <div className="overflow-hidden border border-border rounded-lg">
+        <Table>
+          <TableHeader><TableRow><TableHead>Adjustment</TableHead><TableHead>Date</TableHead><TableHead>Target</TableHead><TableHead className="text-right">KG</TableHead><TableHead>Reason</TableHead><TableHead>Status</TableHead><TableHead className="w-12"><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
+          <TableBody>
+            {!isLoading && adjustments.length === 0 && <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">No adjustments recorded.</TableCell></TableRow>}
+            {adjustments.map((row) => <TableRow key={row.id}><TableCell className="font-mono text-xs">{row.adjustment_no}</TableCell><TableCell>{row.adjustment_date}</TableCell><TableCell>{row.target_type === 'supplier' ? row.supplier_name : `${row.target_type} / ${row.coffee_type}`}</TableCell><TableCell className={`text-right font-semibold ${Number(row.quantity_kg) < 0 ? 'text-red-700' : 'text-emerald-700'}`}>{Number(row.quantity_kg) > 0 ? '+' : ''}{fmt(row.quantity_kg)}</TableCell><TableCell>{row.reason}</TableCell><TableCell><span className={`text-xs font-semibold ${row.status === 'approved' ? 'text-emerald-700' : 'text-muted-foreground'}`}>{row.status}</span></TableCell><TableCell>{canWrite && row.status === 'approved' && <Button type="button" variant="ghost" size="icon" title="Reverse adjustment" aria-label={`Reverse ${row.adjustment_no}`} onClick={() => setReversing(row)} disabled={reverseMutation.isPending}><RotateCcw className="h-4 w-4" /></Button>}</TableCell></TableRow>)}
+          </TableBody>
+        </Table>
       </div>
-
-      {/* New Adjustment Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>New Stock Adjustment</DialogTitle>
-            <DialogDescription>Record a manual stock correction with audit trail.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Adjustment Area */}
-            <div className="space-y-1.5">
-              <Label htmlFor="adj-area">Adjustment Area</Label>
-              <Select value={form.adjustment_area} onValueChange={(v) => setForm((f) => ({ ...f, adjustment_area: v }))}>
-                <SelectTrigger id="adj-area">
-                  <SelectValue placeholder="Select area…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AREAS.map((a) => (
-                    <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Direction Toggle */}
-            <div className="space-y-1.5">
-              <Label>Direction</Label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, direction: 'increase' }))}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${
-                    form.direction === 'increase'
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                      : 'border-border bg-background text-muted-foreground hover:border-emerald-300'
-                  }`}
-                >
-                  <ArrowUpCircle className="w-4 h-4" /> Increase
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, direction: 'decrease' }))}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${
-                    form.direction === 'decrease'
-                      ? 'border-red-500 bg-red-50 text-red-700'
-                      : 'border-border bg-background text-muted-foreground hover:border-red-300'
-                  }`}
-                >
-                  <ArrowDownCircle className="w-4 h-4" /> Decrease
-                </button>
-              </div>
-            </div>
-
-            {/* Quantity + Unit */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="adj-qty">Quantity</Label>
-                <Input
-                  id="adj-qty"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0"
-                  value={form.quantity}
-                  onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="adj-unit">Unit</Label>
-                <Select value={form.unit} onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}>
-                  <SelectTrigger id="adj-unit">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UNITS.map((u) => (
-                      <SelectItem key={u} value={u}>{u}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Reason */}
-            <div className="space-y-1.5">
-              <Label htmlFor="adj-reason">Reason</Label>
-              <Select value={form.reason} onValueChange={(v) => setForm((f) => ({ ...f, reason: v }))}>
-                <SelectTrigger id="adj-reason">
-                  <SelectValue placeholder="Select reason…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {REASONS.map((r) => (
-                    <SelectItem key={r} value={r}>{r}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Note (required if reason is Other) */}
-            <div className="space-y-1.5">
-              <Label htmlFor="adj-note">
-                Note {form.reason === 'Other' && <span className="text-red-500">*</span>}
-              </Label>
-              <Textarea
-                id="adj-note"
-                placeholder="Additional details…"
-                value={form.note}
-                onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                required={form.reason === 'Other'}
-                rows={3}
-              />
-            </div>
-
-            {/* Current Balance Display */}
-            {form.adjustment_area && currentBalance !== null && (
-              <div className="rounded-lg border border-border bg-muted/30 p-3 flex items-center gap-3">
-                <Scale className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Current Balance</p>
-                  <p className="text-lg font-bold text-foreground">{fmtInt(currentBalance)} kg</p>
-                </div>
-                {form.quantity && (
-                  <div className="ml-auto text-right">
-                    <p className="text-xs text-muted-foreground">After Adjustment</p>
-                    <p className={`text-lg font-bold ${form.direction === 'increase' ? 'text-emerald-700' : 'text-red-600'}`}>
-                      {fmtInt(form.direction === 'increase' ? currentBalance + Number(form.quantity) : currentBalance - Number(form.quantity))} kg
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || !form.adjustment_area || !form.quantity || !form.reason || (form.reason === 'Other' && !form.note.trim())}
-              >
-                {createMutation.isPending ? 'Creating…' : 'Create Adjustment'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ReasonDialog
+        open={Boolean(reversing)}
+        onOpenChange={(open) => { if (!open) setReversing(null); }}
+        title="Reverse inventory adjustment"
+        description={reversing ? `Provide a business reason for reversing ${reversing.adjustment_no}.` : ''}
+        confirmLabel="Reverse adjustment"
+        pending={reverseMutation.isPending}
+        onConfirm={(reason) => reverseMutation.mutate({ id: reversing.id, reason })}
+      />
     </div>
   );
 }

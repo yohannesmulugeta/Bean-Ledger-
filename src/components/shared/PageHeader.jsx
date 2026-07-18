@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 export default function PageHeader({ title, description, children = null }) {
   return (
@@ -11,7 +12,7 @@ export default function PageHeader({ title, description, children = null }) {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {React.Children.map(children, child => 
             React.isValidElement(child) 
-              ? React.cloneElement(child, { className: child.props.className + ' w-full sm:w-auto' })
+              ? React.cloneElement(child, { className: cn(child.props.className, 'w-full sm:w-auto') })
               : child
           )}
         </div>

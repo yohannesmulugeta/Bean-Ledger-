@@ -3,6 +3,9 @@
  * Uses plain React state; no TanStack Query dependency.
  */
 import { useAuth } from '@/lib/AuthContext';
+import { MODULES, modulePaths } from '@/lib/appModules';
+
+export { MODULES } from '@/lib/appModules';
 
 // ── Role constants ──────────────────────────────────────────────────────────
 export const ROLES = {
@@ -20,12 +23,12 @@ export const ROLES = {
 };
 
 export const ROLE_LABELS = {
-  admin: 'Admin',
+  admin: 'Administrator',
   supervisor: 'Supervisor',
   purchaser: 'Purchaser',
-  warehouse_keeper: 'Warehouse Keeper',
-  process_manager: 'Process Manager',
-  final_registrar: 'Final Registrar',
+  warehouse_keeper: 'Warehouse Officer',
+  process_manager: 'Processing Manager',
+  final_registrar: 'Output Registrar',
   export_manager: 'Export Manager',
   accountant: 'Accountant',
   auditor: 'Auditor',
@@ -34,36 +37,6 @@ export const ROLE_LABELS = {
 };
 
 // ── Modules and their permission types ──────────────────────────────────────
-export const MODULES = {
-  dashboard: { key: 'dashboard', label: 'Dashboard', category: 'Operations', path: '/' },
-  purchase_registration: { key: 'purchase_registration', label: 'Purchase Registration', category: 'Operations', path: '/purchase-registration' },
-  warehouse_receipt: { key: 'warehouse_receipt', label: 'Warehouse Receipt', category: 'Operations', path: '/warehouse-receipt' },
-  sample_log: { key: 'sample_log', label: 'Sample Log', category: 'Operations', path: '/sample-log' },
-  processing_log: { key: 'processing_log', label: 'Processing Log', category: 'Operations', path: '/processing-log' },
-  output_report: { key: 'output_report', label: 'Output Report', category: 'Operations', path: '/output-report' },
-  export_contracts: { key: 'export_contracts', label: 'Export Contracts', category: 'Export & Stock', path: '/export-contracts' },
-  buyer_inspections: { key: 'buyer_inspections', label: 'Buyer Inspections', category: 'Export & Stock', path: '/buyer-inspections' },
-  stock_report: { key: 'stock_report', label: 'Stock Report', category: 'Export & Stock', path: '/stock-report' },
-  materials_register: { key: 'materials_register', label: 'Materials Register', category: 'Export & Stock', path: '/materials-register' },
-  bag_ledger: { key: 'bag_ledger', label: 'Bag Ledger', category: 'Export & Stock', path: '/bag-ledger' },
-  reports: { key: 'reports', label: 'Summary Reports', category: 'Reports', path: '/reports' },
-  purchase_orders_report: { key: 'purchase_orders_report', label: 'Purchase Orders Report', category: 'Reports', path: '/purchase-orders-report' },
-  warehouse_receipt_report: { key: 'warehouse_receipt_report', label: 'Warehouse Receipt Report', category: 'Reports', path: '/warehouse-receipt-report' },
-  user_activity_report: { key: 'user_activity_report', label: 'User Activity Report', category: 'Reports', path: '/user-report' },
-  activity_log: { key: 'activity_log', label: 'Activity Log', category: 'Reports', path: '/activity-log' },
-  notification_history: { key: 'notification_history', label: 'Notification History', category: 'Notifications', path: '/notification-history' },
-  notification_settings: { key: 'notification_settings', label: 'Notification Settings', category: 'Notifications', path: '/notification-settings' },
-  master_data: { key: 'master_data', label: 'Master Data', category: 'Admin', path: '/master-data' },
-  users_roles: { key: 'users_roles', label: 'Users & Roles', category: 'Admin', path: '/users-management' },
-  data_audit: { key: 'data_audit', label: 'Data Audit', category: 'Admin', path: '/data-audit' },
-  purchases_overview: { key: 'purchases_overview', label: 'Purchases Overview', category: 'Operations', path: '/purchases' },
-  warehouse_overview: { key: 'warehouse_overview', label: 'Warehouse Overview', category: 'Operations', path: '/warehouse' },
-  processing_overview: { key: 'processing_overview', label: 'Processing Overview', category: 'Operations', path: '/processing' },
-  exports_overview: { key: 'exports_overview', label: 'Exports Overview', category: 'Export & Stock', path: '/exports' },
-  adjustment_center: { key: 'adjustment_center', label: 'Adjustment Center', category: 'Admin', path: '/adjustment-center' },
-  supplier_remaining: { key: 'supplier_remaining', label: 'Supplier Balance Explanation', category: 'Reports', path: '/supplier-remaining-explanation' },
-};
-
 const ALL_MODULE_KEYS = Object.keys(MODULES);
 
 export const PERMISSION_TYPES = ['can_view', 'can_create', 'can_edit', 'can_delete', 'can_archive', 'can_restore', 'can_export', 'can_import', 'can_approve', 'can_manage_payments', 'can_view_financials', 'can_manage_attachments'];
@@ -72,7 +45,7 @@ export const PERMISSION_TYPES = ['can_view', 'can_create', 'can_edit', 'can_dele
 const FULL_PERMS = {};
 PERMISSION_TYPES.forEach(p => { FULL_PERMS[p] = true; });
 
-export const ADMIN_ROUTES = Object.values(MODULES).map(m => m.path);
+export const ADMIN_ROUTES = Object.values(MODULES).flatMap(modulePaths);
 
 const SYSTEM_PATHS = ['/notification-history', '/notification-settings'];
 
@@ -135,6 +108,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     purchase_orders_report: { can_view: true, can_export: true },
     warehouse_receipt_report: { can_view: true, can_export: true },
     bag_ledger: { can_view: true },
+    adjustment_center: { can_view: true, can_export: true },
+    year_close: { can_view: true, can_export: true },
+    commission_report: { can_view: true, can_export: true, can_view_financials: true },
   },
   auditor: {
     dashboard: { can_view: true },
@@ -143,9 +119,11 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     reports: { can_view: true, can_export: true },
     purchase_orders_report: { can_view: true, can_export: true },
     warehouse_receipt_report: { can_view: true, can_export: true },
-    user_activity_report: { can_view: true, can_export: true },
     activity_log: { can_view: true },
     data_audit: { can_view: true, can_export: true },
+    adjustment_center: { can_view: true, can_export: true },
+    year_close: { can_view: true, can_export: true },
+    commission_report: { can_view: true, can_export: true },
   },
   viewer: {
     dashboard: { can_view: true },
@@ -158,14 +136,14 @@ export const DEFAULT_ROLE_PERMISSIONS = {
 export const DEFAULT_ROLE_ROUTES = {
   admin: ADMIN_ROUTES,
   supervisor: ADMIN_ROUTES,
-  purchaser: ['/', '/purchases', '/warehouse', '/processing', '/purchase-registration', '/warehouse-receipt', '/sample-log', '/stock-report', '/master-data', '/bag-ledger', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/supplier-remaining-explanation'],
-  warehouse_keeper: ['/', '/warehouse', '/warehouse-receipt', '/sample-log', '/stock-report', '/bag-ledger', '/materials-register', '/warehouse-receipt-report'],
-  process_manager: ['/', '/processing', '/sample-log', '/processing-log', '/output-report', '/stock-report', '/reports'],
+  purchaser: ['/', '/purchase-registration', '/warehouse-receipt', '/sample-log', '/stock-report', '/master-data', '/bag-ledger', '/reports', '/purchase-orders-report', '/warehouse-receipt-report'],
+  warehouse_keeper: ['/', '/warehouse-receipt', '/sample-log', '/stock-report', '/bag-ledger', '/materials-register', '/warehouse-receipt-report'],
+  process_manager: ['/', '/sample-log', '/processing-log', '/output-report', '/stock-report', '/reports'],
   final_registrar: ['/', '/output-report', '/stock-report', '/export-contracts', '/buyer-inspections', '/reports'],
-  export_manager: ['/', '/exports', '/export-contracts', '/buyer-inspections', '/stock-report', '/materials-register', '/bag-ledger', '/master-data', '/reports'],
-  accountant: ['/', '/purchases', '/exports', '/purchase-registration', '/export-contracts', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/bag-ledger', '/supplier-remaining-explanation'],
-  auditor: ['/', '/purchases', '/warehouse', '/processing', '/exports', '/purchase-registration', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/user-report', '/activity-log', '/data-audit', '/supplier-remaining-explanation'],
-  viewer: ['/', '/purchases', '/warehouse', '/processing', '/exports', '/stock-report', '/reports'],
+  export_manager: ['/', '/export-contracts', '/buyer-inspections', '/stock-report', '/materials-register', '/bag-ledger', '/master-data', '/reports'],
+  accountant: ['/', '/purchase-registration', '/export-contracts', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/bag-ledger', '/adjustment-center', '/year-close', '/commission-report'],
+  auditor: ['/', '/purchase-registration', '/stock-report', '/reports', '/purchase-orders-report', '/warehouse-receipt-report', '/activity-log', '/data-audit', '/adjustment-center', '/year-close', '/commission-report'],
+  viewer: ['/', '/stock-report', '/reports'],
   unassigned: [],
 };
 
@@ -235,7 +213,7 @@ export function usePermission() {
         if (parsed[key] !== undefined) return String(parsed[key]);
       }
     } catch (e) {}
-    
+
     const demoSettings = {
       allow_supervisor_manage_users: 'false',
       allow_supervisor_manage_permissions: 'false',

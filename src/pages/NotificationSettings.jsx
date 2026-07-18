@@ -46,7 +46,7 @@ export default function NotificationSettings() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <PageHeader title="Demo Notification Settings" description="Local demo preferences only" />
+      <PageHeader title="Notification Preferences" description="Local demo notification preferences" />
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
         These settings affect only the demo notification center. Telegram, email, Supabase Auth users, and production notification delivery are not connected.

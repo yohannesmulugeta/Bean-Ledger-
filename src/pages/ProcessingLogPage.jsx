@@ -34,6 +34,7 @@ import NumberInput from '@/components/shared/NumberInput';
 import RichArchiveDialog from '@/components/shared/RichArchiveDialog';
 import ArchivedRecordsSection from '@/components/shared/ArchivedRecordsSection';
 import { computeAvailabilityBySupplier } from '@/lib/availabilityUtils';
+import { stockAdjustmentService } from '@/services/governanceService';
 import { logActivity, diffRecords } from '@/lib/activityLogger';
 import TablePagination from '@/components/shared/TablePagination';
 import { BAG_WEIGHT_KG } from '@/lib/constants';
@@ -517,17 +518,18 @@ export default function ProcessingLogPage() {
     queryKey: ['purchase-records'],
     queryFn: () => purchaseService.list(),
   });
+  const { data: stockAdjustments = [] } = useQuery({ queryKey: ['stock-adjustments'], queryFn: () => stockAdjustmentService.list() });
 
   // Full availability breakdown per supplier — uses shared canonical formula.
   const availabilityBySupplier = useMemo(() => {
-    const raw = computeAvailabilityBySupplier({ receipts, purchases, sampleLogs, processingLogs: logs });
+    const raw = computeAvailabilityBySupplier({ receipts, purchases, sampleLogs, processingLogs: logs, adjustments: stockAdjustments });
     // Reshape to { received, samples, processed } for backwards-compat with the form
     const map = {};
     Object.entries(raw).forEach(([name, v]) => {
-      map[name] = { received: v.netCoffeeKg, samples: v.samplesKg, processed: v.processedKg };
+      map[name] = { received: v.netCoffeeKg + v.adjustmentKg, samples: v.samplesKg, processed: v.processedKg };
     });
     return map;
-  }, [receipts, sampleLogs, logs, purchases]);
+  }, [receipts, sampleLogs, logs, purchases, stockAdjustments]);
 
   const remainingBySupplier = useMemo(() => {
     const map = {};
@@ -655,7 +657,7 @@ export default function ProcessingLogPage() {
           }}
           onDismiss={() => { setAuditIssueTitle(''); setAuditRecordId(''); setAuditFound(null); }}
         />
-        <PageHeader title="Processing Log" description="Track daily coffee processing dispatch to factory">
+        <PageHeader title="Coffee Processing Register" description="Track coffee dispatched to processing facilities">
           <Button onClick={() => { setEditRecord(null); setDialogOpen(true); }}>
             <Plus className="w-4 h-4 mr-1" /> New Entry
           </Button>

@@ -244,7 +244,7 @@ export default function WarehouseReceiptPage() {
   return (
     <RoleGuard allowedRoles={['admin', 'warehouse_keeper']}>
       <div>
-        <PageHeader title="Warehouse Receipt" description="Manage incoming coffee warehouse receipts">
+        <PageHeader title="Warehouse Receiving" description="Record and manage incoming coffee receipts">
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowArchived((value) => !value)}>
               <ArchiveRestore className="w-4 h-4 mr-1" /> {showArchived ? 'Hide Archived' : 'Show Archived'}

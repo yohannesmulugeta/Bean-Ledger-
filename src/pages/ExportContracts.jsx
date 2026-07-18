@@ -27,6 +27,7 @@ import RoleGuard from '@/components/RoleGuard';
 import AuditRecordBanner from '@/components/shared/AuditRecordBanner';
 import { computeStockPools } from '@/lib/stockPools';
 import { notifyExportContract } from '@/lib/notificationService';
+import { stockAdjustmentService } from '@/services/governanceService';
 import NumberInput from '@/components/shared/NumberInput';
 import TablePagination from '@/components/shared/TablePagination';
 import ActiveFilters from '@/components/shared/ActiveFilters';
@@ -57,11 +58,11 @@ function PayStatusBadge({ status }) {
 }
 
 // ─── Available Stock Calculator (Fresh + Recleaned pools) ────────────────────
-function useAvailableStock(outputReports, contracts, inspections, sampleLogs) {
+function useAvailableStock(outputReports, contracts, inspections, sampleLogs, adjustments) {
   return useMemo(() => {
-    const { fresh, recleaned } = computeStockPools({ outputReports, contracts, inspections, sampleLogs });
+    const { fresh, recleaned } = computeStockPools({ outputReports, contracts, inspections, sampleLogs, adjustments });
     return { available: fresh, availableRecleaned: recleaned };
-  }, [outputReports, contracts, inspections, sampleLogs]);
+  }, [outputReports, contracts, inspections, sampleLogs, adjustments]);
 }
 
 // ─── Payment Row Component ────────────────────────────────────────────────────
@@ -529,13 +530,14 @@ export default function ExportContracts() {
     queryKey: ['sample-logs'],
     queryFn: () => sampleService.list(),
   });
+  const { data: stockAdjustments = [] } = useQuery({ queryKey: ['stock-adjustments'], queryFn: () => stockAdjustmentService.list() });
 
   const masterCoffeeTypes = useMemo(() => {
     const types = new Set(suppliers.map(s => s.coffee_type).filter(Boolean));
     return Array.from(types).sort();
   }, [suppliers]);
 
-  const { available: availableStock, availableRecleaned } = useAvailableStock(outputReports, contracts, inspections, sampleLogs);
+  const { available: availableStock, availableRecleaned } = useAvailableStock(outputReports, contracts, inspections, sampleLogs, stockAdjustments);
 
   const createMutation = useMutation({
     mutationFn: data => exportService.create(data),

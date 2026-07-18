@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Lock, RefreshCw, Save, ShieldAlert, KeyRound, CheckSquare, Settings } from 'lucide-react';
+import { Lock, RefreshCw, ShieldAlert, KeyRound, CheckSquare, Settings } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -292,7 +292,7 @@ export default function PermissionsPage() {
                     Object.keys(MODULES).map((modKey) => {
                       const mod = MODULES[modKey];
                       const activePerms = customPermissions[selectedRole]?.[modKey] || {};
-                      
+
                       return (
                         <div key={modKey} className="border border-border rounded-xl p-4 space-y-3 bg-muted/15 hover:bg-muted/30 transition-colors">
                           <div className="flex items-center justify-between pb-2 border-b border-border">
@@ -304,12 +304,12 @@ export default function PermissionsPage() {
                               {mod.category}
                             </Badge>
                           </div>
-                          
+
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 pt-1">
                             {PERMISSION_TYPES.map((permType) => {
                               const value = !!activePerms[permType];
                               const label = permType.replace('can_', '').replace(/_/g, ' ');
-                              
+
                               return (
                                 <div key={permType} className="flex items-center justify-between text-xs py-1">
                                   <span className="capitalize text-muted-foreground font-medium">{label}</span>

@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { reportService, REPORT_CACHE_KEYS, REPORT_QUERY_KEYS } from '@/services/reportService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
 import { useOfflineQuery } from '@/hooks/useOfflineQuery';
-import RoleGuard from '@/components/RoleGuard';
+import ReportWorkspaceNav from '@/components/reports/ReportWorkspaceNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -348,7 +349,7 @@ function PurchaseSummaryReport({ purchases, suppliers, receipts }) {
     filters.status !== 'all',
   ].filter(Boolean).length;
 
-  useMemo(() => { setPage(1); }, [filters]);
+  useEffect(() => { setPage(1); }, [filters]);
 
   const receiptByCoffeeCode = useMemo(() => {
     const map = {};
@@ -922,7 +923,7 @@ function PaymentsReport({ purchases, suppliers }) {
 function PaymentsReportBody({ filtered, totalPaid, bankTotals, supplierTotals, exportHeaders, exportRows, exportTotalsRow }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  useMemo(() => { setPage(1); }, [filtered.length]);
+  useEffect(() => { setPage(1); }, [filtered.length]);
   const totalPages = Math.max(1, Math.ceil(exportRows.length / pageSize));
   const pagedRows = exportRows.slice((page - 1) * pageSize, page * pageSize);
   return (
@@ -997,7 +998,7 @@ function ProcessingReport({ processingLogs, suppliers }) {
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  useMemo(() => { setPage(1); }, [filters]);
+  useEffect(() => { setPage(1); }, [filters]);
 
   const headers = ['#', 'Date', 'Supplier', 'Bags Sent', 'KG Sent', 'Cumulative KG', 'Batch No', 'Remark'];
   const csvRows = rowsWithCum.map((p, i) => [i+1, fmtDate(p.date), p.supplier_name, p.bags_sent??'—', fmt(p.kg_sent), fmt(p.cumulative), p.batch_no||'—', p.remark||'—']);
@@ -1199,6 +1200,10 @@ function ExportContractsReport({ contracts }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function Reports() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const reportViews = ['purchase', 'warehouse', 'balance', 'payments', 'processing', 'output', 'export-contracts'];
+  const requestedView = searchParams.get('view');
+  const activeView = reportViews.includes(requestedView) ? requestedView : 'purchase';
   const { data: snapshot = /** @type {any} */ ({}), fromCache, lastUpdated } = useOfflineQuery(REPORT_CACHE_KEYS.snapshot, { queryKey: REPORT_QUERY_KEYS.snapshot, queryFn: () => reportService.snapshot(), staleTime: 60000 });
   const purchases = snapshot.purchases || [];
   const receipts = snapshot.receipts || [];
@@ -1209,11 +1214,11 @@ export default function Reports() {
   const exportContracts = snapshot.exportContracts || [];
 
   return (
-    <RoleGuard allowedRoles={['admin']}>
       <div>
-        <PageHeader title="Reports" description="Generate and export operational reports" />
+        <PageHeader title="Reporting & Analytics" description="Operational, financial, inventory, and export analysis" />
+        <ReportWorkspaceNav />
         <OfflineDataBanner visible={fromCache} lastUpdated={lastUpdated} />
-        <Tabs defaultValue="purchase">
+        <Tabs value={activeView} onValueChange={(view) => setSearchParams({ view }, { replace: true })}>
           <TabsList className="flex-wrap h-auto gap-1 mb-6">
             <TabsTrigger value="purchase">Purchase Summary</TabsTrigger>
             <TabsTrigger value="warehouse">Warehouse Stock</TabsTrigger>
@@ -1246,6 +1251,5 @@ export default function Reports() {
           </TabsContent>
         </Tabs>
       </div>
-    </RoleGuard>
   );
 }

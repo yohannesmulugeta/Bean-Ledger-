@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { reportService, REPORT_CACHE_KEYS, REPORT_QUERY_KEYS } from '@/services/reportService';
 import PageHeader from '@/components/shared/PageHeader';
 import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
@@ -8,11 +9,12 @@ import { Search, RefreshCw, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { exportXLSX } from '@/lib/exportUtils';
 import FilterPanel, { FilterButton } from '@/components/shared/FilterPanel';
-import RoleGuard from '@/components/RoleGuard';
 import { format } from 'date-fns';
 import { computeStockPools } from '@/lib/stockPools';
 import { computeAvailabilityBySupplier } from '@/lib/availabilityUtils';
 import CoffeePoolsCard from '@/components/stock/CoffeePoolsCard';
+
+const SupplierRemainingExplanation = lazy(() => import('@/pages/SupplierRemainingExplanation'));
 
 function fmt(n, d = 0) {
   if (n == null || isNaN(n)) return '—';
@@ -146,7 +148,12 @@ function SupplierCard({ c }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function StockReport() {
-  const [activeTab, setActiveTab] = useState('by-coffee-type');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedView = searchParams.get('view');
+  const activeTab = ['by-coffee-type', 'by-supplier', 'supplier-reconciliation'].includes(requestedView)
+    ? requestedView
+    : 'by-coffee-type';
+  const setActiveTab = (view) => setSearchParams({ view }, { replace: true });
   const [search, setSearch] = useState('');
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [filterOpen, setFilterOpen] = useState(false);
@@ -161,11 +168,12 @@ export default function StockReport() {
   const suppliers = snapshot.suppliers || [];
   const contracts = snapshot.exportContracts || [];
   const inspections = snapshot.buyerInspections || [];
+  const stockAdjustments = snapshot.stockAdjustments || [];
 
   // Two-pool breakdown per coffee type (Fresh + Recleaned)
   const { breakdown: poolBreakdown } = useMemo(
-    () => computeStockPools({ outputReports, contracts, inspections, sampleLogs }),
-    [outputReports, contracts, inspections, sampleLogs]
+    () => computeStockPools({ outputReports, contracts, inspections, sampleLogs, adjustments: stockAdjustments }),
+    [outputReports, contracts, inspections, sampleLogs, stockAdjustments]
   );
   const poolCoffeeTypes = useMemo(() => Object.keys(poolBreakdown).sort(), [poolBreakdown]);
   // Per-type buyer reference (first failed inspection buyer per coffee type)
@@ -227,6 +235,7 @@ export default function StockReport() {
       purchases,
       sampleLogs: activeSampleLogs,
       processingLogs: activeProcessingLogs,
+      adjustments: stockAdjustments,
     });
 
     // Fix 1: Received KG = sum of warehouse_received_net_kg per supplier (deduplicated, one row per receipt)
@@ -297,7 +306,7 @@ export default function StockReport() {
       // Fix 4: include ALL suppliers with at least one receipt (received > 0 OR in availMap)
     }).filter(c => (grossReceivedMap[c.name] || 0) > 0 || (availMap[c.name]?.netCoffeeKg || 0) > 0)
       .sort((a, b) => b.remaining - a.remaining);
-  }, [receipts, purchases, sampleLogs, processingLogs, supplierMap]);
+  }, [receipts, purchases, sampleLogs, processingLogs, supplierMap, stockAdjustments]);
 
   // ── Per-coffee-type aggregation (Tab 1) ────────────────────────────────────
   const coffeeTypeCards = useMemo(() => {
@@ -388,26 +397,30 @@ export default function StockReport() {
   const tabs = [
     { id: 'by-coffee-type', label: 'By Coffee Type' },
     { id: 'by-supplier', label: 'By Supplier' },
+    { id: 'supplier-reconciliation', label: 'Supplier Reconciliation' },
   ];
 
   return (
-    <RoleGuard allowedRoles={['admin', 'warehouse_keeper', 'export_manager', 'final_registrar']}>
       <div className="space-y-5 pb-6">
-        <PageHeader title="Stock Report" description="Live warehouse inventory">
+        <PageHeader title="Inventory & Stock" description="Live warehouse inventory and supplier reconciliation">
           <div className="flex items-center gap-3 flex-wrap">
-            <FilterButton onClick={() => setFilterOpen(true)} activeCount={stockFilterActiveCount} />
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-xs"
-              onClick={() => {
-                const headers = ['Supplier', 'Coffee Type', 'Received KG', 'Processed KG', 'Remaining KG', 'Waste KG'];
-                const rows = supplierCards.map(c => [c.name, c.coffeeType, c.received, c.actualProc, c.remainingDisplay, c.waste]);
-                exportXLSX('Stock_Report_By_Supplier', 'Stock Report — By Supplier', headers, rows, null);
-              }}
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
-            </Button>
+            {activeTab !== 'supplier-reconciliation' && (
+              <>
+                <FilterButton onClick={() => setFilterOpen(true)} activeCount={stockFilterActiveCount} />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs"
+                  onClick={() => {
+                    const headers = ['Supplier', 'Coffee Type', 'Received KG', 'Processed KG', 'Remaining KG', 'Waste KG'];
+                    const rows = supplierCards.map(c => [c.name, c.coffeeType, c.received, c.actualProc, c.remainingDisplay, c.waste]);
+                    exportXLSX('Inventory_Stock_By_Supplier', 'Inventory & Stock - By Supplier', headers, rows, null);
+                  }}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
+                </Button>
+              </>
+            )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Auto-refresh 30s · Last: {format(lastRefresh, 'HH:mm:ss')}</span>
@@ -415,7 +428,7 @@ export default function StockReport() {
           </div>
         </PageHeader>
         <OfflineDataBanner visible={fromCacheReceipts} lastUpdated={lastUpdated} />
-        <FilterPanel
+        {activeTab !== 'supplier-reconciliation' && <FilterPanel
           open={filterOpen}
           onClose={() => setFilterOpen(false)}
           fields={[
@@ -426,10 +439,10 @@ export default function StockReport() {
           values={filters}
           onApply={v => setFilters(v)}
           onReset={() => setFilters({ supplier: 'all', coffeeType: 'all', showZero: false })}
-        />
+        />}
 
         {/* Summary bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {activeTab !== 'supplier-reconciliation' && <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Total Received KG', value: fmt(summary.totalReceived), color: 'text-foreground' },
             { label: 'Total Remaining KG', value: fmt(summary.totalRemaining), color: 'text-green-700' },
@@ -442,7 +455,7 @@ export default function StockReport() {
               {item.note && <p className="text-[9px] text-muted-foreground mt-0.5">{item.note}</p>}
             </div>
           ))}
-        </div>
+        </div>}
 
         {/* Tab switcher */}
         <div className="flex w-full rounded-xl overflow-hidden border border-border">
@@ -515,7 +528,12 @@ export default function StockReport() {
             )}
           </div>
         )}
+
+        {activeTab === 'supplier-reconciliation' && (
+          <Suspense fallback={<div className="py-12 text-center text-sm text-muted-foreground">Loading reconciliation...</div>}>
+            <SupplierRemainingExplanation embedded snapshot={snapshot} />
+          </Suspense>
+        )}
       </div>
-    </RoleGuard>
   );
 }

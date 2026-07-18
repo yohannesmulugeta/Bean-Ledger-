@@ -43,8 +43,9 @@ function KpiCard({ label, value, unit = '', sub, icon: Icon, accentColor = '#1F2
       <div className="min-w-0 overflow-hidden">
         <div className="flex flex-col mt-2">
           <span
-            className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight break-words min-w-0"
+            className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-2xl font-bold leading-tight tabular-nums"
             style={{ color: highlight ? '#B08D57' : '#1F2A24' }}
+            title={String(value)}
           >
             {value}
           </span>
@@ -101,6 +102,7 @@ export default function Dashboard() {
   const suppliers = snapshot.suppliers || [];
   const exportContracts = snapshot.exportContracts || [];
   const inspections = snapshot.buyerInspections || [];
+  const stockAdjustments = snapshot.stockAdjustments || [];
 
   const filteredPurchaseRecords = useMemo(
     () => filterByDateRange(purchaseRecords, balanceRange, 'purchase_date'),
@@ -108,8 +110,8 @@ export default function Dashboard() {
   );
 
   const stockPools = useMemo(
-    () => computeStockPools({ outputReports, contracts: exportContracts, inspections, sampleLogs }),
-    [outputReports, exportContracts, inspections, sampleLogs]
+    () => computeStockPools({ outputReports, contracts: exportContracts, inspections, sampleLogs, adjustments: stockAdjustments }),
+    [outputReports, exportContracts, inspections, sampleLogs, stockAdjustments]
   );
   const totalRecleanedKg = useMemo(
     () => Object.values(stockPools.recleaned).reduce((s, v) => s + (v || 0), 0),
@@ -159,6 +161,7 @@ export default function Dashboard() {
       purchases: activePurchases,
       sampleLogs: activeSamples,
       processingLogs: activeProcessing,
+      adjustments: stockAdjustments,
     });
     const warehouseRemainingKg = Object.values(availMap).reduce((total, v) => total + v.availableKg, 0);
     const totalProcessingKg = activeProcessing.reduce((s, p) => s + (p.actual_weighed_kg ?? p.kg_sent ?? 0), 0);
@@ -194,7 +197,7 @@ export default function Dashboard() {
       totalProcessingKg, exportProfitEtb, suppliersCount, fullyPaidCount, partiallyPaidCount,
       payPct, overallRejectPct,
     };
-  }, [purchaseRecords, filteredPurchaseRecords, confirmedCodes, receipts, sampleLogs, processingLogs, outputReports, exportContracts]);
+  }, [purchaseRecords, filteredPurchaseRecords, confirmedCodes, receipts, sampleLogs, processingLogs, outputReports, exportContracts, stockAdjustments]);
 
   const exportSummary = useMemo(() => {
     const activeContracts = exportContracts.filter(c => c?.archived !== true);

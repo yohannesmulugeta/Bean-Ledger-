@@ -5,11 +5,22 @@ const viteEnv = import.meta.env || {};
 const supabaseUrl = viteEnv.VITE_SUPABASE_URL;
 const supabaseAnonKey = viteEnv.VITE_SUPABASE_ANON_KEY;
 
+export function readSupabaseJwtRole(value) {
+  try {
+    const payload = value.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(payload.padEnd(Math.ceil(payload.length / 4) * 4, '='))).role;
+  } catch {
+    return null;
+  }
+}
+
+const supabaseKeyRole = typeof supabaseAnonKey === 'string' ? readSupabaseJwtRole(supabaseAnonKey) : null;
+
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 export const frontendEnvValidation = {
   hasSupabaseUrl: Boolean(supabaseUrl),
   hasSupabaseAnonKey: Boolean(supabaseAnonKey),
-  hasServiceRoleLikeKey: typeof supabaseAnonKey === 'string' && /service[_-]?role/i.test(supabaseAnonKey),
+  hasServiceRoleLikeKey: supabaseKeyRole === 'service_role' || (typeof supabaseAnonKey === 'string' && /service[_-]?role/i.test(supabaseAnonKey)),
   messages: [],
 };
 

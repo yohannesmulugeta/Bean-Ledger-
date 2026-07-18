@@ -47,10 +47,11 @@ export default function SupplierBalancesTable({ dateRange }) {
   const receipts = snapshot.receipts || [];
   const sampleLogs = snapshot.sampleLogs || [];
   const processingLogs = snapshot.processingLogs || [];
+  const stockAdjustments = snapshot.stockAdjustments || [];
   // Pre-compute availability using the canonical formula (for warehouse waste display)
   const availMap = useMemo(() => computeAvailabilityBySupplier({
-    receipts, purchases: purchaseRecords, sampleLogs, processingLogs,
-  }), [receipts, purchaseRecords, sampleLogs, processingLogs]);
+    receipts, purchases: purchaseRecords, sampleLogs, processingLogs, adjustments: stockAdjustments,
+  }), [receipts, purchaseRecords, sampleLogs, processingLogs, stockAdjustments]);
 
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['purchase-records'] });

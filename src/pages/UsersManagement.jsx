@@ -34,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Users,
   UserPlus,
   Shield,
   ShieldCheck,
@@ -198,7 +197,7 @@ export default function UsersManagement() {
 
   const activeUsers = filteredUsers.filter((u) => u.status === 'active');
   const pendingUsers = filteredUsers.filter((u) => u.status === 'pending' || u.status === 'unassigned');
-  
+
   const filteredInvites = invites.filter((inv) =>
     (inv.email || '').toLowerCase().includes(searchQuery.toLowerCase())
   );

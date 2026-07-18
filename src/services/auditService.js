@@ -47,7 +47,7 @@ function archivedRecordLogs(store) {
       entity_table: table,
       entity_id: row.id,
       record_description: describe(row),
-      reason: row.archive_reason || row.notes || row.note || 'Synthetic archived demo record',
+      reason: row.archive_reason || row.notes || row.note || 'Archived during an approved record replacement',
       changes: { archived_at: row.archived_at, demo: true },
       is_demo: true,
       created_at: row.archived_at,
@@ -56,34 +56,8 @@ function archivedRecordLogs(store) {
 
 function seedLogs(store) {
   const manual = (store.auditLogs || []).map(normalizeLog);
-  const seeds = [
-    {
-      id: 'audit-demo-purchase-001',
-      organization_id: DEMO_META.organizationId,
-      action_type: 'Created',
-      entity_table: 'purchase_records',
-      entity_id: store.purchases?.[0]?.id,
-      record_description: store.purchases?.[0]?.coffee_code || 'Synthetic demo purchase',
-      reason: 'Synthetic Phase 9 audit seed',
-      changes: { demo: true },
-      is_demo: true,
-      created_at: '2026-06-02T09:00:00Z',
-    },
-    {
-      id: 'audit-demo-export-001',
-      organization_id: DEMO_META.organizationId,
-      action_type: 'Created',
-      entity_table: 'export_contracts',
-      entity_id: store.exportContracts?.[0]?.id,
-      record_description: store.exportContracts?.[0]?.contract_no || 'Synthetic demo export contract',
-      reason: 'Synthetic Phase 9 audit seed',
-      changes: { demo: true },
-      is_demo: true,
-      created_at: '2026-06-09T08:00:00Z',
-    },
-  ].map(normalizeLog);
 
-  return [...manual, ...seeds, ...archivedRecordLogs(store)]
+  return [...manual, ...archivedRecordLogs(store)]
     .sort((a, b) => String(b.created_date || '').localeCompare(String(a.created_date || '')));
 }
 

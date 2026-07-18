@@ -326,7 +326,7 @@ function DataAuditContent() {
   if (!allLoaded) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Data Audit" description="Check ERP records for stock, finance, workflow, and data quality problems." />
+        <PageHeader title="Data Quality Audit" description="Check ERP records for inventory, finance, workflow, and data quality issues." />
         <div className="space-y-3">
           <Skeleton className="h-8 w-48" />
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -340,7 +340,7 @@ function DataAuditContent() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Data Audit" description="Check ERP records for stock, finance, workflow, and data quality problems.">
+      <PageHeader title="Data Quality Audit" description="Check ERP records for inventory, finance, workflow, and data quality issues.">
         <Button onClick={runAudit} disabled={running} className="h-10 gap-2">
           <Play className="w-4 h-4" /> {running ? 'Running Audit...' : 'Run Audit'}
         </Button>
