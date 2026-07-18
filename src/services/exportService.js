@@ -181,6 +181,25 @@ export const exportService = {
     return decorate(updated);
   },
 
+  async updateShipmentDetails(id, shipmentDetails) {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase
+        .from('export_contracts')
+        .update({ shipment_details: shipmentDetails, updated_at: nowIso() })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return decorate(data);
+    }
+    const store = readDemoStore();
+    const index = store.exportContracts.findIndex((item) => item.id === id);
+    if (index < 0) throw new Error('Export contract not found');
+    store.exportContracts[index] = { ...store.exportContracts[index], shipment_details: shipmentDetails, updated_at: nowIso() };
+    writeDemoStore(store);
+    return decorate(store.exportContracts[index]);
+  },
+
   async archive(id, reason = '') {
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.rpc('archive_export_contract', { p_export_contract_id: id, p_reason: reason });
