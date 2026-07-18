@@ -1,149 +1,155 @@
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { warehouseService } from '@/services/warehouseService';
 import { format } from 'date-fns';
+import { Plus, Search, Warehouse, Scale, AlertTriangle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/shared/PageHeader';
-import DataTable, { StatusBadge } from '@/components/shared/DataTable';
-import RecordFormDialog from '@/components/shared/RecordFormDialog';
-import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
-import { useOfflineQuery } from '@/hooks/useOfflineQuery';
-import useOfflineSaveGuard from '@/hooks/useOfflineSaveGuard';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const FIELDS = [
-  { name: 'lot_number', label: 'Lot Number', required: true, placeholder: 'e.g. LOT-2024-001' },
-  { name: 'coffee_type', label: 'Coffee Type', type: 'select', options: ['Arabica', 'Robusta', 'Mixed'], required: true },
-  { name: 'grade', label: 'Grade', type: 'select', options: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Ungraded'] },
-  { name: 'quantity_kg', label: 'Quantity (kg)', type: 'number', required: true, placeholder: '0' },
-  { name: 'warehouse_location', label: 'Warehouse / Section', required: true, placeholder: 'e.g. Warehouse A, Section 3' },
-  { name: 'status', label: 'Status', type: 'select', options: ['In Storage', 'In Processing', 'Ready for Export', 'Exported'], default: 'In Storage' },
-  { name: 'received_date', label: 'Received Date', type: 'date' },
-  { name: 'moisture_content', label: 'Moisture Content (%)', type: 'number', placeholder: 'e.g. 11.5' },
-  { name: 'source_purchase_id', label: 'Source Purchase Reference', placeholder: 'Optional reference' },
-  { name: 'notes', label: 'Notes', type: 'textarea', placeholder: 'Additional notes...' },
-];
+const fmt = (n) => (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtInt = (n) => (n ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-const COLUMNS = [
-  { header: 'Lot #', render: (row) => <span className="font-mono text-sm font-medium">{row.lot_number}</span> },
-  { header: 'Type', accessor: 'coffee_type' },
-  { header: 'Grade', accessor: 'grade' },
-  { header: 'Quantity', render: (row) => `${(row.quantity_kg || 0).toLocaleString()} kg` },
-  { header: 'Location', accessor: 'warehouse_location' },
-  { header: 'Moisture', render: (row) => row.moisture_content ? `${row.moisture_content}%` : '-' },
-  { header: 'Received', render: (row) => row.received_date ? format(new Date(row.received_date), 'MMM d, yyyy') : '-' },
-  { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-];
+function KpiCard({ label, value, sub = null, color = 'text-foreground', icon: Icon, iconColor }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 flex items-start gap-4">
+      {Icon && (
+        <div className={`mt-0.5 p-2 rounded-lg ${iconColor || 'bg-muted'}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{label}</p>
+        <p className={`text-2xl font-bold ${color}`}>{value}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
 
 export default function WarehousePage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
 
-  const { data: inventory = [], isLoading, fromCache, lastUpdated } = useOfflineQuery('inventory', {
-    queryKey: ['inventory'],
-    queryFn: () => base44.entities.WarehouseInventory.list('-received_date', 100),
+  const { data: receipts = [], isLoading } = useQuery({
+    queryKey: ['warehouseReceipts'],
+    queryFn: () => warehouseService.listReceipts(),
     staleTime: 60000,
   });
 
-  const { isOnline, guardSave, OfflineDialog } = useOfflineSaveGuard();
+  const active = useMemo(() => receipts.filter(r => !r.archived), [receipts]);
 
-  const createMutation = useMutation({
-    /** @param {any} data */
-    mutationFn: (data) => base44.entities.WarehouseInventory.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['inventory'] }); setDialogOpen(false); },
-  });
+  const kpis = useMemo(() => {
+    const totalReceivedKg = active.reduce((s, r) => s + (r.warehouse_received_net_kg || r.received_kg || 0), 0);
+    const totalShortageKg = active.reduce((s, r) => s + (r.shortage_kg || 0), 0);
+    const pendingCount = active.filter(r => r.status === 'pending' || r.status === 'received').length;
+    return { count: active.length, totalReceivedKg, totalShortageKg, pendingCount };
+  }, [active]);
 
-  const updateMutation = useMutation({
-    /** @param {any} variables */
-    mutationFn: (variables) => {
-      const { id, data } = variables;
-      return base44.entities.WarehouseInventory.update(id, data);
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['inventory'] }); setDialogOpen(false); setEditing(null); },
-  });
-
-  const deleteMutation = useMutation({
-    /** @param {any} id */
-    mutationFn: (id) => base44.entities.WarehouseInventory.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['inventory'] }); setDeleteTarget(null); },
-  });
-
-  const handleSubmit = (data) => {
-    guardSave(() => {
-      if (editing) {
-        updateMutation.mutate({ id: editing.id, data });
-      } else {
-        createMutation.mutate(data);
-      }
-    });
-  };
-
-  const actionsColumn = {
-    header: '',
-    render: (row) => (
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditing(row); setDialogOpen(true); }}>
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(row); }}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    ),
-  };
+  const filtered = useMemo(() => {
+    if (!search.trim()) return active;
+    const q = search.toLowerCase();
+    return active.filter(r =>
+      (r.supplier_name || '').toLowerCase().includes(q) ||
+      (r.coffee_code || '').toLowerCase().includes(q) ||
+      (r.grn_code || r.receipt_number || '').toLowerCase().includes(q)
+    );
+  }, [active, search]);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Warehouse" description="Manage coffee inventory and storage">
-        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Add Inventory
+      <PageHeader title="Warehouse" description="Overview of all warehouse receipts and incoming stock">
+        <Button onClick={() => navigate('/warehouse-receipt')}>
+          <Plus className="h-4 w-4 mr-2" /> Record Receipt
         </Button>
       </PageHeader>
 
-      <OfflineDataBanner visible={fromCache} lastUpdated={lastUpdated} />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
+        ) : (
+          <>
+            <KpiCard label="Total Receipts" value={fmtInt(kpis.count)} sub="active records"
+              icon={Warehouse} iconColor="bg-blue-50 text-blue-600" />
+            <KpiCard label="Total Received KG" value={`${fmtInt(kpis.totalReceivedKg)} kg`}
+              icon={Scale} iconColor="bg-emerald-50 text-emerald-600" />
+            <KpiCard label="Total Shortage KG" value={`${fmt(kpis.totalShortageKg)} kg`}
+              icon={AlertTriangle} iconColor={kpis.totalShortageKg < 0 ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'}
+              color={kpis.totalShortageKg < 0 ? 'text-red-600' : 'text-foreground'} />
+            <KpiCard label="Pending Processing" value={fmtInt(kpis.pendingCount)} sub="awaiting next step"
+              icon={Clock} iconColor="bg-purple-50 text-purple-600" />
+          </>
+        )}
+      </div>
 
-      <DataTable
-        columns={[...COLUMNS, actionsColumn]}
-        data={inventory}
-        isLoading={isLoading}
-        onRowClick={() => {}}
-        emptyMessage="No inventory records. Click 'Add Inventory' to get started."
-      />
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input className="pl-9" placeholder="Search supplier, coffee code, GRN…" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
 
-      <RecordFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        title={editing ? 'Edit Inventory' : 'Add Inventory'}
-        fields={FIELDS}
-        initialData={editing}
-        onSubmit={handleSubmit}
-        isSubmitting={createMutation.isPending || updateMutation.isPending}
-      />
-
-      <OfflineDialog />
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Inventory Record</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete lot {deleteTarget?.lot_number}? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteMutation.mutate(deleteTarget.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Table */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                {['Coffee Code', 'Supplier', 'GRN Code', 'Received Date', 'Dispatch KG', 'Received KG', 'Shortage KG', 'Bags', 'Remark'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array(6).fill(0).map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    {Array(9).fill(0).map((__, j) => <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>)}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">
+                  {search ? 'No receipts match your search.' : 'No warehouse receipts recorded yet.'}
+                </td></tr>
+              ) : filtered.map((r, idx) => {
+                const shortage = r.shortage_kg || 0;
+                return (
+                  <tr
+                    key={r.id}
+                    className={`border-b border-border hover:bg-muted/30 ${idx % 2 === 0 ? '' : 'bg-muted/10'}`}
+                  >
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1F2A24] whitespace-nowrap">{r.coffee_code || '—'}</td>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap">{r.supplier_name || '—'}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{r.grn_code || r.receipt_number || '—'}</td>
+                    <td className="px-4 py-3 text-xs whitespace-nowrap">{r.received_date ? format(new Date(r.received_date), 'd MMM yyyy') : '—'}</td>
+                    <td className="px-4 py-3 text-right text-xs">{fmtInt(r.net_dispatch_weight_kg || r.dispatch_kg)}</td>
+                    <td className="px-4 py-3 text-right text-xs">{fmtInt(r.warehouse_received_net_kg || r.received_kg)}</td>
+                    <td className={`px-4 py-3 text-right font-bold text-xs ${shortage < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                      {fmt(shortage)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs">{fmtInt(r.bags_received)}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px] truncate">{r.remark || r.notes || '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            {!isLoading && filtered.length > 0 && (
+              <tfoot>
+                <tr style={{ background: '#1F2A24', color: '#fff' }}>
+                  <td colSpan={4} className="px-4 py-3 text-xs font-bold">TOTALS ({filtered.length} records)</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold">{fmtInt(filtered.reduce((s, r) => s + (r.net_dispatch_weight_kg || r.dispatch_kg || 0), 0))}</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold">{fmtInt(filtered.reduce((s, r) => s + (r.warehouse_received_net_kg || r.received_kg || 0), 0))}</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold text-red-300">{fmt(filtered.reduce((s, r) => s + (r.shortage_kg || 0), 0))}</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold">{fmtInt(filtered.reduce((s, r) => s + (r.bags_received || 0), 0))}</td>
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

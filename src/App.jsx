@@ -74,10 +74,6 @@ const AuthenticatedApp = () => {
       {/* Protected demo app routes */}
       <Route element={isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />}>
         <Route path="/" element={protectedRoute("/", Dashboard)} />
-        <Route path="/purchases" element={<Navigate to="/purchase-registration" replace />} />
-        <Route path="/warehouse" element={<Navigate to="/warehouse-receipt" replace />} />
-        <Route path="/processing" element={<Navigate to="/processing-log" replace />} />
-        <Route path="/exports" element={<Navigate to="/export-contracts" replace />} />
         <Route path="/master-data" element={protectedRoute("/master-data", MasterData)} />
         <Route path="/purchase-registration" element={protectedRoute("/purchase-registration", PurchaseRegistration)} />
         <Route path="/warehouse-receipt" element={protectedRoute("/warehouse-receipt", WarehouseReceiptPage)} />

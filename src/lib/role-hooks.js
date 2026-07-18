@@ -133,7 +133,6 @@ export const DEFAULT_ROLE_PERMISSIONS = {
   unassigned: {},
 };
 
-// ── Default allowed paths per role (for sidebar) ───────────────────────────
 export const DEFAULT_ROLE_ROUTES = {
   admin: ADMIN_ROUTES,
   supervisor: ADMIN_ROUTES,
@@ -168,7 +167,16 @@ export function useRole() {
   const allowedRoutes = (() => {
     if (!role) return [];
     if (isAdmin) return [...ADMIN_ROUTES, '/users-management'];
-    const defaults = DEFAULT_ROLE_ROUTES[role] || [];
+    let defaults = DEFAULT_ROLE_ROUTES[role] || [];
+    try {
+      const stored = localStorage.getItem('kkgt_custom_role_routes');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed[role]) defaults = parsed[role];
+      }
+    } catch (e) {
+      console.error(e);
+    }
     return [...new Set([...defaults, ...SYSTEM_PATHS])];
   })();
 
@@ -198,6 +206,14 @@ export function usePermission() {
   const isSupervisor = role === ROLES.SUPERVISOR;
 
   const getSecuritySetting = (key, def = 'false') => {
+    try {
+      const stored = localStorage.getItem('kkgt_custom_security_settings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed[key] !== undefined) return String(parsed[key]);
+      }
+    } catch (e) {}
+
     const demoSettings = {
       allow_supervisor_manage_users: 'false',
       allow_supervisor_manage_permissions: 'false',
@@ -208,7 +224,15 @@ export function usePermission() {
   const getModulePerms = (moduleKey) => {
     if (!moduleKey) return {};
     if (isAdmin) return { ...FULL_PERMS };
-    return DEFAULT_ROLE_PERMISSIONS[role]?.[moduleKey] || {};
+    let perms = DEFAULT_ROLE_PERMISSIONS[role]?.[moduleKey] || {};
+    try {
+      const stored = localStorage.getItem('kkgt_custom_role_permissions');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed[role]?.[moduleKey]) perms = parsed[role][moduleKey];
+      }
+    } catch (e) {}
+    return perms;
   };
 
   const canPerform = (moduleKey, action) => {

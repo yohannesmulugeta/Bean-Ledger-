@@ -1,154 +1,201 @@
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { purchaseService } from '@/services/purchaseService';
 import { format } from 'date-fns';
+import { Plus, Search, TrendingUp, Scale, Banknote, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/shared/PageHeader';
-import DataTable, { StatusBadge } from '@/components/shared/DataTable';
-import RecordFormDialog from '@/components/shared/RecordFormDialog';
-import OfflineDataBanner from '@/components/shared/OfflineDataBanner';
-import { useOfflineQuery } from '@/hooks/useOfflineQuery';
-import useOfflineSaveGuard from '@/hooks/useOfflineSaveGuard';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const FIELDS = [
-  { name: 'supplier_name', label: 'Supplier Name', required: true, placeholder: 'Enter supplier name' },
-  { name: 'supplier_location', label: 'Supplier Location', placeholder: 'Region or town' },
-  { name: 'coffee_type', label: 'Coffee Type', type: 'select', options: ['Arabica', 'Robusta', 'Mixed'], required: true },
-  { name: 'grade', label: 'Grade', type: 'select', options: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Ungraded'] },
-  { name: 'quantity_kg', label: 'Quantity (kg)', type: 'number', required: true, placeholder: '0' },
-  { name: 'price_per_kg', label: 'Price per kg (ETB)', type: 'number', required: true, placeholder: '0' },
-  { name: 'total_cost', label: 'Total Cost (ETB)', type: 'number', readOnly: true, default: 0 },
-  { name: 'purchase_date', label: 'Purchase Date', type: 'date', required: true },
-  { name: 'payment_status', label: 'Payment Status', type: 'select', options: ['Pending', 'Partial', 'Paid'], default: 'Pending' },
-  { name: 'notes', label: 'Notes', type: 'textarea', placeholder: 'Additional notes...' },
-];
+const fmt = (n) => (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtInt = (n) => (n ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-const COLUMNS = [
-  { header: 'Supplier', accessor: 'supplier_name', render: (row) => (
-    <div>
-      <p className="font-medium text-sm">{row.supplier_name}</p>
-      <p className="text-xs text-muted-foreground">{row.supplier_location}</p>
+function KpiCard({ label, value, sub = null, color = 'text-foreground', icon: Icon, iconColor }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 flex items-start gap-4">
+      {Icon && (
+        <div className={`mt-0.5 p-2 rounded-lg ${iconColor || 'bg-muted'}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{label}</p>
+        <p className={`text-2xl font-bold ${color}`}>{value}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      </div>
     </div>
-  )},
-  { header: 'Type', accessor: 'coffee_type' },
-  { header: 'Grade', accessor: 'grade' },
-  { header: 'Quantity', render: (row) => `${(row.quantity_kg || 0).toLocaleString()} kg` },
-  { header: 'Price/kg', render: (row) => `${(row.price_per_kg || 0).toLocaleString()} ETB` },
-  { header: 'Total', render: (row) => `${(row.total_cost || 0).toLocaleString()} ETB` },
-  { header: 'Date', render: (row) => row.purchase_date ? format(new Date(row.purchase_date), 'MMM d, yyyy') : '-' },
-  { header: 'Payment', render: (row) => <StatusBadge status={row.payment_status} /> },
-];
+  );
+}
+
+function PaymentBadge({ status }) {
+  const styles = {
+    'Paid': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'Partial': 'bg-amber-100 text-amber-700 border-amber-200',
+    'Unpaid': 'bg-red-100 text-red-700 border-red-200',
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${styles[status] || 'bg-muted text-muted-foreground border-border'}`}>
+      {status || 'Unknown'}
+    </span>
+  );
+}
+
+function PaymentHistoryRow({ payment, idx }) {
+  return (
+    <div className="flex items-center gap-3 py-1.5 text-xs border-b border-border last:border-0">
+      <span className="text-muted-foreground w-5 text-right flex-shrink-0">#{idx + 1}</span>
+      <span className="text-muted-foreground flex-shrink-0">{payment.payment_date ? format(new Date(payment.payment_date), 'd MMM yyyy') : '—'}</span>
+      <span className="font-semibold text-emerald-700 flex-shrink-0">{fmt(payment.amount_etb)} ETB</span>
+      <span className="text-muted-foreground flex-shrink-0">{payment.bank_name || ''}</span>
+      <span className="font-mono text-muted-foreground text-[10px] flex-shrink-0">{payment.cpv_reference || ''}</span>
+    </div>
+  );
+}
 
 export default function Purchases() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
 
-  const { data: purchases = [], isLoading, fromCache, lastUpdated } = useOfflineQuery('purchases', {
+  const { data: purchases = [], isLoading } = useQuery({
     queryKey: ['purchases'],
-    queryFn: () => base44.entities.Purchase.list('-purchase_date', 100),
+    queryFn: () => purchaseService.list(),
     staleTime: 60000,
   });
 
-  const { isOnline, guardSave, OfflineDialog } = useOfflineSaveGuard();
+  const active = useMemo(() => purchases.filter(p => !p.archived), [purchases]);
 
-  const createMutation = useMutation({
-    /** @param {any} data */
-    mutationFn: (data) => base44.entities.Purchase.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchases'] }); setDialogOpen(false); },
-  });
+  const kpis = useMemo(() => {
+    const totalKg = active.reduce((s, p) => s + (p.net_dispatch_weight_kg || 0), 0);
+    const totalValue = active.reduce((s, p) => s + (p.grand_total_etb || 0), 0);
+    const totalPaid = active.reduce((s, p) => s + (p.total_paid_etb || 0), 0);
+    const totalBalance = active.reduce((s, p) => s + (p.balance_etb || 0), 0);
+    return { count: active.length, totalKg, totalValue, totalPaid, totalBalance };
+  }, [active]);
 
-  const updateMutation = useMutation({
-    /** @param {any} variables */
-    mutationFn: (variables) => {
-      const { id, data } = variables;
-      return base44.entities.Purchase.update(id, data);
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchases'] }); setDialogOpen(false); setEditing(null); },
-  });
+  const filtered = useMemo(() => {
+    if (!search.trim()) return active;
+    const q = search.toLowerCase();
+    return active.filter(p =>
+      (p.supplier_name || '').toLowerCase().includes(q) ||
+      (p.coffee_code || '').toLowerCase().includes(q) ||
+      (p.region || '').toLowerCase().includes(q)
+    );
+  }, [active, search]);
 
-  const deleteMutation = useMutation({
-    /** @param {any} id */
-    mutationFn: (id) => base44.entities.Purchase.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['purchases'] }); setDeleteTarget(null); },
-  });
-
-  const handleSubmit = (data) => {
-    guardSave(() => {
-      if (editing) {
-        updateMutation.mutate({ id: editing.id, data });
-      } else {
-        createMutation.mutate(data);
-      }
-    });
-  };
-
-  const actionsColumn = {
-    header: '',
-    render: (row) => (
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditing(row); setDialogOpen(true); }}>
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(row); }}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    ),
-  };
+  const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Purchases" description="Track coffee purchases from suppliers">
-        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
+      <PageHeader title="Purchases" description="Overview of all coffee purchase records">
+        <Button onClick={() => navigate('/purchase-registration')}>
           <Plus className="h-4 w-4 mr-2" /> New Purchase
         </Button>
       </PageHeader>
 
-      <OfflineDataBanner visible={fromCache} lastUpdated={lastUpdated} />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
+        ) : (
+          <>
+            <KpiCard label="Total Purchases" value={fmtInt(kpis.count)} sub="active records"
+              icon={TrendingUp} iconColor="bg-blue-50 text-blue-600" />
+            <KpiCard label="Total KG Dispatched" value={`${fmtInt(kpis.totalKg)} kg`}
+              icon={Scale} iconColor="bg-emerald-50 text-emerald-600" />
+            <KpiCard label="Total Value" value={`${fmt(kpis.totalValue)} ETB`}
+              icon={Banknote} iconColor="bg-amber-50 text-amber-600" color="text-amber-700" />
+            <KpiCard label="Balance Owed" value={`${fmt(kpis.totalBalance)} ETB`}
+              icon={AlertCircle} iconColor="bg-red-50 text-red-500" color="text-red-600" />
+          </>
+        )}
+      </div>
 
-      <DataTable
-        columns={[...COLUMNS, actionsColumn]}
-        data={purchases}
-        isLoading={isLoading}
-        onRowClick={() => {}}
-        emptyMessage="No purchases recorded yet. Click 'New Purchase' to get started."
-      />
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input className="pl-9" placeholder="Search supplier, coffee code, region…" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
 
-      <RecordFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        title={editing ? 'Edit Purchase' : 'New Purchase'}
-        fields={FIELDS}
-        initialData={editing}
-        onSubmit={handleSubmit}
-        isSubmitting={createMutation.isPending || updateMutation.isPending}
-      />
-
-      <OfflineDialog />
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Purchase</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this purchase from {deleteTarget?.supplier_name}? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteMutation.mutate(deleteTarget.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Table */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                {['', 'Coffee Code', 'Supplier', 'Region', 'Date', 'KG', 'Unit Price', 'Grand Total ETB', 'Paid ETB', 'Balance ETB', 'Status'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array(6).fill(0).map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    {Array(11).fill(0).map((__, j) => <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>)}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={11} className="text-center py-12 text-muted-foreground">
+                  {search ? 'No purchases match your search.' : 'No purchases recorded yet.'}
+                </td></tr>
+              ) : filtered.map((p, idx) => {
+                const payments = (() => { try { return JSON.parse(p.payment_history || '[]'); } catch { return []; } })();
+                const isExpanded = expandedId === p.id;
+                return (
+                  <React.Fragment key={p.id}>
+                    <tr
+                      className={`border-b border-border hover:bg-muted/30 cursor-pointer ${idx % 2 === 0 ? '' : 'bg-muted/10'}`}
+                      onClick={() => toggleExpand(p.id)}
+                    >
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {payments.length > 0
+                          ? (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)
+                          : <span className="w-4 inline-block" />}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1F2A24] whitespace-nowrap">{p.coffee_code || '—'}</td>
+                      <td className="px-4 py-3 font-medium whitespace-nowrap">{p.supplier_name || '—'}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{p.region || '—'}</td>
+                      <td className="px-4 py-3 text-xs whitespace-nowrap">{p.purchase_date ? format(new Date(p.purchase_date), 'd MMM yyyy') : '—'}</td>
+                      <td className="px-4 py-3 text-right text-xs">{fmtInt(p.net_dispatch_weight_kg)}</td>
+                      <td className="px-4 py-3 text-right text-xs">{fmt(p.unit_price_etb_per_feresula)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-xs">{fmt(p.grand_total_etb)}</td>
+                      <td className="px-4 py-3 text-right text-emerald-700 font-semibold text-xs">{fmt(p.total_paid_etb)}</td>
+                      <td className={`px-4 py-3 text-right font-bold text-xs ${(p.balance_etb || 0) > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                        {fmt(p.balance_etb)}
+                      </td>
+                      <td className="px-4 py-3"><PaymentBadge status={p.payment_status} /></td>
+                    </tr>
+                    {isExpanded && payments.length > 0 && (
+                      <tr className="border-b border-border bg-muted/20">
+                        <td colSpan={11} className="px-8 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Payment History</p>
+                          {payments.map((pay, i) => <PaymentHistoryRow key={i} payment={pay} idx={i} />)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+            {!isLoading && filtered.length > 0 && (
+              <tfoot>
+                <tr style={{ background: '#1F2A24', color: '#fff' }}>
+                  <td colSpan={5} className="px-4 py-3 text-xs font-bold">TOTALS ({filtered.length} records)</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold">{fmtInt(filtered.reduce((s, p) => s + (p.net_dispatch_weight_kg || 0), 0))}</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3 text-right text-xs font-bold">{fmt(filtered.reduce((s, p) => s + (p.grand_total_etb || 0), 0))}</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold text-emerald-300">{fmt(filtered.reduce((s, p) => s + (p.total_paid_etb || 0), 0))}</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold text-red-300">{fmt(filtered.reduce((s, p) => s + (p.balance_etb || 0), 0))}</td>
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

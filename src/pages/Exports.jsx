@@ -1,146 +1,215 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { exportService } from '@/services/exportService';
 import { format } from 'date-fns';
+import { Plus, Search, FileText, Scale, DollarSign, Landmark, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/shared/PageHeader';
-import DataTable, { StatusBadge } from '@/components/shared/DataTable';
-import RecordFormDialog from '@/components/shared/RecordFormDialog';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const FIELDS = [
-  { name: 'contract_number', label: 'Contract Number', required: true, placeholder: 'e.g. EXP-2024-001' },
-  { name: 'buyer_name', label: 'Buyer Name', required: true, placeholder: 'Buyer / importer name' },
-  { name: 'buyer_country', label: 'Destination Country', required: true, placeholder: 'e.g. Germany' },
-  { name: 'coffee_type', label: 'Coffee Type', type: 'select', options: ['Arabica', 'Robusta', 'Mixed'], required: true },
-  { name: 'grade', label: 'Grade', type: 'select', options: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
-  { name: 'quantity_kg', label: 'Quantity (kg)', type: 'number', required: true, placeholder: '0' },
-  { name: 'price_per_kg_usd', label: 'Price per kg (USD)', type: 'number', placeholder: '0' },
-  { name: 'total_value_usd', label: 'Total Value (USD)', type: 'number', readOnly: true, default: 0 },
-  { name: 'shipment_date', label: 'Shipment Date', type: 'date' },
-  { name: 'status', label: 'Status', type: 'select', options: ['Contract Signed', 'Preparing', 'In Transit', 'Delivered', 'Completed'], default: 'Contract Signed' },
-  { name: 'shipping_method', label: 'Shipping Method', type: 'select', options: ['Sea Freight', 'Air Freight', 'Land Transport'] },
-  { name: 'batch_numbers', label: 'Batch Numbers', placeholder: 'Comma-separated batch references' },
-  { name: 'notes', label: 'Notes', type: 'textarea', placeholder: 'Export notes...' },
-];
+const fmt = (n) => (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtInt = (n) => (n ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-const COLUMNS = [
-  { header: 'Contract', render: (row) => <span className="font-mono text-sm font-medium">{row.contract_number}</span> },
-  { header: 'Buyer', render: (row) => (
-    <div>
-      <p className="font-medium text-sm">{row.buyer_name}</p>
-      <p className="text-xs text-muted-foreground">{row.buyer_country}</p>
+function KpiCard({ label, value, sub = null, color = 'text-foreground', icon: Icon, iconColor }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 flex items-start gap-4">
+      {Icon && (
+        <div className={`mt-0.5 p-2 rounded-lg ${iconColor || 'bg-muted'}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">{label}</p>
+        <p className={`text-2xl font-bold ${color}`}>{value}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      </div>
     </div>
-  )},
-  { header: 'Type', accessor: 'coffee_type' },
-  { header: 'Grade', accessor: 'grade' },
-  { header: 'Quantity', render: (row) => `${(row.quantity_kg || 0).toLocaleString()} kg` },
-  { header: 'Value', render: (row) => row.total_value_usd ? `$${row.total_value_usd.toLocaleString()}` : '-' },
-  { header: 'Ship Date', render: (row) => row.shipment_date ? format(new Date(row.shipment_date), 'MMM d, yyyy') : '-' },
-  { header: 'Method', accessor: 'shipping_method', render: (row) => row.shipping_method || '-' },
-  { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-];
+  );
+}
+
+function PaymentStatusBadge({ status }) {
+  const styles = {
+    'Fully Received': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'Partial': 'bg-amber-100 text-amber-700 border-amber-200',
+    'Unpaid': 'bg-red-100 text-red-700 border-red-200',
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${styles[status] || 'bg-muted text-muted-foreground border-border'}`}>
+      {status || 'Unknown'}
+    </span>
+  );
+}
+
+function StatusBadge({ status }) {
+  const styles = {
+    'Pending': 'bg-gray-100 text-gray-700 border-gray-200',
+    'In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
+    'Shipped': 'bg-purple-100 text-purple-700 border-purple-200',
+    'Completed': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${styles[status] || 'bg-muted text-muted-foreground border-border'}`}>
+      {status || 'Unknown'}
+    </span>
+  );
+}
+
+function PaymentHistoryRow({ payment, idx }) {
+  return (
+    <div className="flex items-center gap-3 py-1.5 text-xs border-b border-border last:border-0">
+      <span className="text-muted-foreground w-5 text-right flex-shrink-0">#{idx + 1}</span>
+      <span className="text-muted-foreground flex-shrink-0">{payment.payment_date ? format(new Date(payment.payment_date), 'd MMM yyyy') : '—'}</span>
+      <span className="font-semibold text-blue-700 flex-shrink-0">{fmt(payment.amount_usd || 0)} USD</span>
+      <span className="font-semibold text-emerald-700 flex-shrink-0">{fmt(payment.amount_etb || 0)} ETB</span>
+      <span className="text-muted-foreground flex-shrink-0">{payment.bank_name || ''}</span>
+      <span className="font-mono text-muted-foreground text-[10px] flex-shrink-0">{payment.reference_no || ''}</span>
+    </div>
+  );
+}
 
 export default function Exports() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
 
-  const { data: exports = [], isLoading } = useQuery({
-    queryKey: ['exports'],
-    queryFn: () => base44.entities.Export.list('-created_date', 100),
+  const { data: contracts = [], isLoading } = useQuery({
+    queryKey: ['exportContracts'],
+    queryFn: () => exportService.list(),
+    staleTime: 60000,
   });
 
-  const createMutation = useMutation({
-    /** @param {any} data */
-    mutationFn: (data) => base44.entities.Export.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exports'] }); setDialogOpen(false); },
-  });
+  const active = useMemo(() => contracts.filter(c => !c.archived), [contracts]);
 
-  const updateMutation = useMutation({
-    /** @param {any} variables */
-    mutationFn: (variables) => {
-      const { id, data } = variables;
-      return base44.entities.Export.update(id, data);
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exports'] }); setDialogOpen(false); setEditing(null); },
-  });
+  const kpis = useMemo(() => {
+    const totalExportKg = active.reduce((s, c) => s + (c.export_kg || 0), 0);
+    const totalUsd = active.reduce((s, c) => s + (c.total_export_value_usd || 0), 0);
+    const totalEtb = active.reduce((s, c) => s + (c.total_export_value_etb || 0), 0);
+    return { count: active.length, totalExportKg, totalUsd, totalEtb };
+  }, [active]);
 
-  const deleteMutation = useMutation({
-    /** @param {any} id */
-    mutationFn: (id) => base44.entities.Export.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exports'] }); setDeleteTarget(null); },
-  });
+  const filtered = useMemo(() => {
+    if (!search.trim()) return active;
+    const q = search.toLowerCase();
+    return active.filter(c =>
+      (c.contract_no || '').toLowerCase().includes(q) ||
+      (c.buyer_name || '').toLowerCase().includes(q) ||
+      (c.destination_country || '').toLowerCase().includes(q) ||
+      (c.coffee_type || '').toLowerCase().includes(q)
+    );
+  }, [active, search]);
 
-  const handleSubmit = (data) => {
-    if (editing) {
-      updateMutation.mutate({ id: editing.id, data });
-    } else {
-      createMutation.mutate(data);
-    }
-  };
-
-  const actionsColumn = {
-    header: '',
-    render: (row) => (
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditing(row); setDialogOpen(true); }}>
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(row); }}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    ),
-  };
+  const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Exports" description="Manage export contracts and shipments">
-        <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> New Export
+      <PageHeader title="Exports" description="Overview of all export contracts and shipments">
+        <Button onClick={() => navigate('/export-contracts')}>
+          <Plus className="h-4 w-4 mr-2" /> New Export Contract
         </Button>
       </PageHeader>
 
-      <DataTable
-        columns={[...COLUMNS, actionsColumn]}
-        data={exports}
-        isLoading={isLoading}
-        onRowClick={() => {}}
-        emptyMessage="No export contracts yet. Click 'New Export' to get started."
-      />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
+        ) : (
+          <>
+            <KpiCard label="Active Contracts" value={fmtInt(kpis.count)} sub="active records"
+              icon={FileText} iconColor="bg-blue-50 text-blue-600" />
+            <KpiCard label="Total Export KG" value={`${fmtInt(kpis.totalExportKg)} kg`}
+              icon={Scale} iconColor="bg-emerald-50 text-emerald-600" />
+            <KpiCard label="Total USD Value" value={`$${fmt(kpis.totalUsd)}`}
+              icon={DollarSign} iconColor="bg-amber-50 text-amber-600" color="text-amber-700" />
+            <KpiCard label="Total ETB Value" value={`${fmt(kpis.totalEtb)} ETB`}
+              icon={Landmark} iconColor="bg-purple-50 text-purple-600" color="text-purple-700" />
+          </>
+        )}
+      </div>
 
-      <RecordFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        title={editing ? 'Edit Export' : 'New Export Contract'}
-        fields={FIELDS}
-        initialData={editing}
-        onSubmit={handleSubmit}
-        isSubmitting={createMutation.isPending || updateMutation.isPending}
-      />
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input className="pl-9" placeholder="Search contract, buyer, destination, coffee type…" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Export</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete contract {deleteTarget?.contract_number}? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteMutation.mutate(deleteTarget.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Table */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                {['', 'Contract No', 'Date', 'Buyer', 'Destination', 'Coffee Type', 'Grade', 'KG', 'USD Value', 'ETB Value', 'Payment', 'Status'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array(6).fill(0).map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    {Array(12).fill(0).map((__, j) => <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>)}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={12} className="text-center py-12 text-muted-foreground">
+                  {search ? 'No export contracts match your search.' : 'No export contracts recorded yet.'}
+                </td></tr>
+              ) : filtered.map((c, idx) => {
+                const payments = (() => { try { return JSON.parse(c.payment_history || '[]'); } catch { return []; } })();
+                const isExpanded = expandedId === c.id;
+                const contractDate = c.contract_date || c.export_date;
+                return (
+                  <React.Fragment key={c.id}>
+                    <tr
+                      className={`border-b border-border hover:bg-muted/30 cursor-pointer ${idx % 2 === 0 ? '' : 'bg-muted/10'}`}
+                      onClick={() => toggleExpand(c.id)}
+                    >
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {payments.length > 0
+                          ? (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)
+                          : <span className="w-4 inline-block" />}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1F2A24] whitespace-nowrap">{c.contract_no || '—'}</td>
+                      <td className="px-4 py-3 text-xs whitespace-nowrap">{contractDate ? format(new Date(contractDate), 'd MMM yyyy') : '—'}</td>
+                      <td className="px-4 py-3 font-medium whitespace-nowrap">{c.buyer_name || '—'}</td>
+                      <td className="px-4 py-3 text-xs">{c.destination_country || '—'}</td>
+                      <td className="px-4 py-3 text-xs">{c.coffee_type || '—'}</td>
+                      <td className="px-4 py-3 text-xs">{c.coffee_grade || '—'}</td>
+                      <td className="px-4 py-3 text-right text-xs">{fmtInt(c.export_kg)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-xs">${fmt(c.total_export_value_usd)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-xs">{fmt(c.total_export_value_etb)}</td>
+                      <td className="px-4 py-3"><PaymentStatusBadge status={c.payment_status} /></td>
+                      <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
+                    </tr>
+                    {isExpanded && payments.length > 0 && (
+                      <tr className="border-b border-border bg-muted/20">
+                        <td colSpan={12} className="px-8 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Payment History</p>
+                          {payments.map((pay, i) => <PaymentHistoryRow key={i} payment={pay} idx={i} />)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+            {!isLoading && filtered.length > 0 && (
+              <tfoot>
+                <tr style={{ background: '#1F2A24', color: '#fff' }}>
+                  <td colSpan={7} className="px-4 py-3 text-xs font-bold">TOTALS ({filtered.length} records)</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold">{fmtInt(filtered.reduce((s, c) => s + (c.export_kg || 0), 0))}</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold">${fmt(filtered.reduce((s, c) => s + (c.total_export_value_usd || 0), 0))}</td>
+                  <td className="px-4 py-3 text-right text-xs font-bold">{fmt(filtered.reduce((s, c) => s + (c.total_export_value_etb || 0), 0))}</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3" />
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
