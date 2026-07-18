@@ -316,7 +316,7 @@ function ContractDetailView({ contract, onBack, onEdit, onUpdatePayments }) {
           {rateMissing && (
             <Button onClick={onEdit} size="sm" className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"><Plus className="w-3.5 h-3.5" /> Add Rate</Button>
           )}
-          <Button onClick={() => exportContractPDF(contract)} size="sm" variant="outline" className="gap-1.5"><Download className="w-3.5 h-3.5" /> Export PDF</Button>
+          <Button onClick={() => exportContractPDF(contract)} size="sm" variant="outline" className="gap-1.5"><Download className="w-3.5 h-3.5" /> Contract Summary</Button>
           <Button onClick={onEdit} size="sm" className="gap-1.5"><Pencil className="w-3.5 h-3.5" /> Edit</Button>
         </div>
       </div>

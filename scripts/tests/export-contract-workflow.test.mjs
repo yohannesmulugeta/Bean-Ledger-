@@ -6,6 +6,7 @@ import {
   KG_TO_LB,
   REJECT_BAG_KG,
 } from '../../src/lib/exportContractCalculations.js';
+import { getMissingRequiredUploads, getMissingShipmentFields, getShipmentChecks, parseShipmentDetails } from '../../src/lib/exportDocuments.js';
 
 function createState() {
   return {
@@ -114,5 +115,16 @@ archiveSource(state, 'buyer_inspection', inspection.id);
 assert.equal(exportAvailable(state), 240, 'archive inspection releases sample stock');
 restoreSource(state, 'buyer_inspection', inspection.id);
 assert.equal(exportAvailable(state), 236, 'restore inspection reapplies sample stock');
+
+const shipment = parseShipmentDetails(JSON.stringify({
+  port_of_loading: 'Djibouti',
+  port_of_discharge: 'Hamburg',
+  containers: [{ container_number: 'MSCU1234567', seal_number: 'SEAL-1', bags: 6, net_kg: 356, gross_kg: 365 }],
+}));
+const shipmentChecks = getShipmentChecks({ export_bags: 6, actual_shipped_kg: 356 }, shipment);
+assert.equal(shipmentChecks.every(check => check.ok), true, 'matching shipment details pass discrepancy checks');
+assert.equal(getShipmentChecks({ export_bags: 6, actual_shipped_kg: 360 }, shipment).find(check => check.key === 'net').ok, false, 'weight mismatch is detected');
+assert.deepEqual(getMissingRequiredUploads([{ section_ref: 'bill_of_lading' }]).map(doc => doc.key), ['phytosanitary', 'ico_coo', 'bank_permit'], 'required uploads are tracked');
+assert.deepEqual(getMissingShipmentFields({ buyer_name: 'Buyer' }, shipment).map(field => field.key), ['shipment_date', 'shipping_line', 'booking_number', 'vessel', 'voyage'], 'required shipment fields are tracked');
 
 console.log('Phase 7 export contract workflow tests passed');
