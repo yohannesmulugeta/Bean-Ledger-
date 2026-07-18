@@ -27,6 +27,7 @@ import DuplicateWarningBanner from '@/components/purchases/DuplicateWarningBanne
 import DuplicateConfirmDialog from '@/components/purchases/DuplicateConfirmDialog';
 import { supplierService } from '@/services/supplierService';
 import { purchaseService } from '@/services/purchaseService';
+import { warehouseService } from '@/services/warehouseService';
 import PurchaseAttachmentsPanel from '@/components/attachments/PurchaseAttachmentsPanel';
 
 function fmt(n, decimals = 2) {
@@ -511,7 +512,7 @@ export default function PurchaseRegistration() {
   });
   const { data: receipts = [] } = useQuery({
     queryKey: ['warehouse-receipts'],
-    queryFn: () => purchaseService.listWarehouseReceipts(),
+    queryFn: () => warehouseService.listReceipts(),
   });
   const { data: allPurchaseAttachments = [] } = useQuery({
     queryKey: ['attachments-purchase-all'],

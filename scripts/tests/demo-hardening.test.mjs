@@ -135,4 +135,8 @@ assert.match(operationalAccess, /grant select on table public\.%I to anon/, 'ope
 assert.match(operationalAccess, /is_demo = true/, 'operational access only permits synthetic records');
 assert.match(operationalAccess, /11111111-1111-4111-8111-111111111111/, 'operational access is limited to the fixed demo organization');
 
+const purchasePage = read('src/pages/PurchaseRegistration.jsx');
+assert.match(purchasePage, /warehouseService\.listReceipts\(\)/, 'purchase status uses the shared warehouse receipt query');
+assert.doesNotMatch(read('src/services/purchaseService.js'), /listWarehouseReceipts/, 'empty Supabase receipt shim is removed');
+
 console.log('Phase 11 demo hardening tests passed');
