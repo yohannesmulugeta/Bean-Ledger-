@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { DatabaseBackup, Download, ExternalLink } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -46,11 +46,6 @@ export default function BackupCenter() {
           {scope === 'date_range' && <><div className="space-y-1.5"><Label>From</Label><Input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></div><div className="space-y-1.5"><Label>To</Label><Input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></div></>}
           <div className="flex items-end sm:ml-auto"><Button onClick={() => exportMutation.mutate()} disabled={exportMutation.isPending} className="w-full gap-2"><Download className="h-4 w-4" />Download Excel backup</Button></div>
         </div>
-      </section>
-
-      <section className="mb-8 flex flex-col gap-4 border-l-4 border-emerald-600 bg-emerald-50 px-5 py-4 text-emerald-950 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-3"><DatabaseBackup className="mt-0.5 h-5 w-5 shrink-0" /><div><h2 className="font-semibold">Database recovery</h2><p className="mt-1 text-sm">Use Supabase managed daily backups or PITR for a restorable database backup. Excel exports are demo handoff files.</p></div></div>
-        <Button variant="outline" className="shrink-0 gap-2 bg-white" asChild><a href="https://supabase.com/docs/guides/platform/backups" target="_blank" rel="noreferrer">Supabase backups<ExternalLink className="h-4 w-4" /></a></Button>
       </section>
 
       <h2 className="mb-3 text-base font-semibold">Export history</h2>
