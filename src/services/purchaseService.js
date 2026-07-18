@@ -255,23 +255,6 @@ export const purchaseService = {
     };
   },
 
-  async listWarehouseReceipts() {
-    if (!isSupabaseConfigured) {
-      const store = readDemoStore();
-      return store.purchases
-        .filter((purchase) => !purchase.archived_at && purchase.warehouse_received_kg != null)
-        .map((purchase) => ({
-          id: `demo-receipt-${purchase.id}`,
-          purchase_record_id: purchase.id,
-          coffee_code: purchase.coffee_code,
-          supplier_name: purchase.supplier_name,
-          warehouse_received_net_kg: purchase.warehouse_received_kg,
-          is_demo: true,
-        }));
-    }
-    return [];
-  },
-
   async listPurchaseAttachments() {
     return attachmentService.listForEntity('purchase_record', null);
   },
